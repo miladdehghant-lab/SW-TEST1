@@ -1,0 +1,6 @@
+{
+  "name": "STORE WAR - سامانه مدیریت فروش و رقابت میدانی",
+  "description": "پلتفرم جامع مدیریت قلمرو، فروشگاه‌ها، تارگت‌ها، فعالیت‌های ویزیت و پلانوگرام، کنترل فروش و رتبه‌بندی تیم فروش",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
