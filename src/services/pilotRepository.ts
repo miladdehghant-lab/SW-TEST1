@@ -1,5 +1,4 @@
 import { AppState, User, UserRole } from '../types';
-import { getInitialState } from '../data/mockData';
 import { supabase } from '../lib/supabase';
 
 export interface CloudProfile {
@@ -13,9 +12,7 @@ export interface CloudProfile {
 }
 
 export function emptyPilotState(): AppState {
-  const base = getInitialState();
   return {
-    ...base,
     version: 5,
     users: [],
     stores: [],
@@ -31,6 +28,19 @@ export function emptyPilotState(): AppState {
     subCategories: [],
     planograms: [],
     audit: [],
+    settings: {
+      currentPhase: 'phase1_visitors',
+      weights: {
+        coverage: 15,
+        assortment: 15,
+        drop: 15,
+        stock: 10,
+        repeat: 15,
+        visibility: 10,
+        reliability: 10,
+        growth: 10,
+      },
+    },
   };
 }
 
@@ -42,7 +52,7 @@ export function mapProfileToUser(profile: CloudProfile): User {
     firstName: parts[0] || 'کاربر',
     lastName: parts.slice(1).join(' '),
     city: '',
-    agency: profile.agency_id || 'دفتر مرکزی',
+    agency: 'دفتر مرکزی',
     role: profile.role,
     status: profile.status,
     supervisorId: profile.supervisor_id || undefined,
