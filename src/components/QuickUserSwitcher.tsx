@@ -16,14 +16,23 @@ export const QuickUserSwitcher: React.FC<QuickUserSwitcherProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  // Dynamically resolve options based on current users in the system
+  const adminUser = users.find(u => u.role === 'admin' || u.id === 'usr_admin');
+  const otherUsers = users.filter(u => u.id !== adminUser?.id && u.status === 'approved');
+
   const quickOptions = [
-    { label: 'میلاد دهقانی (مدیر ارشد کل)', role: 'admin', userId: 'usr_admin', isAdmin: true },
-    { label: 'امیرحسین رضایی (سرپرست فروش یزد)', role: 'supervisor', userId: 'usr_sup_1', isAdmin: false },
-    { label: 'سارا محمدی (کارشناس اکسل کارآمد)', role: 'support', userId: 'usr_support_1', isAdmin: false },
-    { label: 'رضا کمالی (مدیر نمایندگی یزد)', role: 'rep', userId: 'usr_rep_1', isAdmin: false },
-    { label: 'علی صادقی (ویزیتور - منطقه ۱)', role: 'seller', userId: 'usr_sel_1', isAdmin: false },
-    { label: 'محمد حسینی (ویزیتور - منطقه ۱)', role: 'seller', userId: 'usr_sel_2', isAdmin: false },
-    { label: 'مهدی فلاح (ویزیتور - میبد و اردکان)', role: 'seller', userId: 'usr_sel_4', isAdmin: false },
+    {
+      label: adminUser ? `${adminUser.firstName} ${adminUser.lastName} (مدیر ارشد کل)` : 'مدیر سیستم',
+      role: 'admin',
+      userId: adminUser?.id || 'usr_admin',
+      isAdmin: true,
+    },
+    ...otherUsers.slice(0, 8).map(u => ({
+      label: `${u.firstName} ${u.lastName} (${roleLabel(u.role)}${u.agency ? ` - ${u.agency}` : ''})`,
+      role: u.role,
+      userId: u.id,
+      isAdmin: false,
+    })),
   ];
 
   const currentUserId = currentSession?.id;

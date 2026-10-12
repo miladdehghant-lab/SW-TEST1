@@ -1,8 +1,8 @@
 import { AppState, AuthSession } from '../types';
 import { getInitialState } from '../data/mockData';
 
-const DB_KEY = 'storewar_pilot_v2';
-const SESSION_KEY = 'storewar_session_v2';
+const DB_KEY = 'storewar_clean_v4';
+const SESSION_KEY = 'storewar_session_clean_v4';
 
 export function loadState(): AppState {
   try {
@@ -13,7 +13,7 @@ export function loadState(): AppState {
       return init;
     }
     const parsed = JSON.parse(raw);
-    if (parsed && parsed.version === 2 && Array.isArray(parsed.users)) {
+    if (parsed && (parsed.version === 3 || parsed.version === 4) && Array.isArray(parsed.users)) {
       return parsed;
     }
     const init = getInitialState();

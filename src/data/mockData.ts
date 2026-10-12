@@ -1,4 +1,4 @@
-import { AppState, User, Store, Activity, Target, TargetRequest, TargetProposal, ScoreEvent, AuditLog, SaleRecord, UploadBatch, WeeklyChallenge } from '../types';
+import { AppState, User, Store, Activity, Target, TargetRequest, TargetProposal, ScoreEvent, AuditLog, SaleRecord, UploadBatch, WeeklyChallenge, SubCategoryDef } from '../types';
 import { ADMIN_PASSWORD, ADMIN_PHONE, monthDefault } from '../utils/formatters';
 import { INITIAL_PRODUCTS, INITIAL_PLANOGRAMS } from '../utils/productPlanogramEngine';
 
@@ -760,22 +760,152 @@ export const INITIAL_TARGET_PROPOSALS: TargetProposal[] = [
   },
 ];
 
-export function getInitialState(): AppState {
+export const INITIAL_SUBCATEGORIES: SubCategoryDef[] = [
+  // برند تست
+  {
+    id: 'subcat_tst_1',
+    name: 'مایع لباسشویی',
+    brand: 'تست',
+    targetWeight: 1.5,
+    description: 'زیرگروه استراتژیک شوینده مایع با تارگت ویژه حجم فروش',
+    isStrategicTarget: true,
+    createdAt: '2026-09-01T08:00:00.000Z',
+  },
+  {
+    id: 'subcat_tst_2',
+    name: 'نرم‌کننده حوله و لباس',
+    brand: 'تست',
+    targetWeight: 1.2,
+    description: 'زیرگروه مکمل شوینده با پاداش حضور در شلف',
+    isStrategicTarget: false,
+    createdAt: '2026-09-01T08:00:00.000Z',
+  },
+  {
+    id: 'subcat_tst_3',
+    name: 'مایع ظرفشویی',
+    brand: 'تست',
+    targetWeight: 1.0,
+    description: 'سبد پرمصرف بهداشت ظروف',
+    isStrategicTarget: false,
+    createdAt: '2026-09-01T08:00:00.000Z',
+  },
+
+  // برند مولفیکس
+  {
+    id: 'subcat_mol_1',
+    name: 'پوشک کامل کودک',
+    brand: 'مولفیکس',
+    targetWeight: 2.0,
+    description: 'کالای طلایی شرکت با تارگت‌گذاری دقیق کارتن و پوشش فروشگاهی',
+    isStrategicTarget: true,
+    createdAt: '2026-09-01T08:00:00.000Z',
+  },
+  {
+    id: 'subcat_mol_2',
+    name: 'دستمال مرطوب کودک',
+    brand: 'مولفیکس',
+    targetWeight: 1.1,
+    description: 'اقلام جانبی و اکسسوری کودک',
+    isStrategicTarget: false,
+    createdAt: '2026-09-01T08:00:00.000Z',
+  },
+
+  // برند تنو و پاپیا
+  {
+    id: 'subcat_tno_1',
+    name: 'دستمال جعبه‌ای و رومیزی',
+    brand: 'تنو',
+    targetWeight: 1.2,
+    description: 'سبد تندمصرف خانگی و اداری',
+    isStrategicTarget: true,
+    createdAt: '2026-09-01T08:00:00.000Z',
+  },
+  {
+    id: 'subcat_tno_2',
+    name: 'دستمال توالت (رولی)',
+    brand: 'تنو',
+    targetWeight: 1.3,
+    description: 'حجم فروش بسته‌های ۴ و چند قلو',
+    isStrategicTarget: true,
+    createdAt: '2026-09-01T08:00:00.000Z',
+  },
+  {
+    id: 'subcat_pap_1',
+    name: 'دستمال حوله‌ای آشپزخانه',
+    brand: 'پاپیا',
+    targetWeight: 1.2,
+    description: 'محصولات لوکس ۳ و ۴ لایه',
+    isStrategicTarget: false,
+    createdAt: '2026-09-01T08:00:00.000Z',
+  },
+
+  // برند مولپد
+  {
+    id: 'subcat_mlp_1',
+    name: 'نوار بهداشتی بالدار',
+    brand: 'مولپد',
+    targetWeight: 1.4,
+    description: 'بهداشت بانوان ماکسی و اولترا با پوشش مستمر',
+    isStrategicTarget: true,
+    createdAt: '2026-09-01T08:00:00.000Z',
+  },
+  {
+    id: 'subcat_mlp_2',
+    name: 'پد روزانه بانوان',
+    brand: 'مولپد',
+    targetWeight: 1.0,
+    description: 'اقلام روتین مراقبت فردی',
+    isStrategicTarget: false,
+    createdAt: '2026-09-01T08:00:00.000Z',
+  },
+
+];
+
+/**
+ * Creates a pristine clean state:
+ * - Keeps only the primary Super Admin account (Milad Dehghani)
+ * - Empty stores, activities, sales, uploads, targets, score events, proposals
+ * - Retains product catalog definitions and shelf standards so the platform is ready to use
+ * - No fake pilot records or local pilot strings
+ */
+export function getCleanEmptyState(): AppState {
+  const adminUser: User = {
+    id: 'usr_admin',
+    phone: ADMIN_PHONE,
+    firstName: 'میلاد',
+    lastName: 'دهقانی',
+    city: 'تهران',
+    agency: 'دفتر مرکزی',
+    role: 'admin',
+    status: 'approved',
+    password: ADMIN_PASSWORD,
+    createdAt: new Date().toISOString(),
+  };
+
   return {
-    version: 2,
-    users: INITIAL_USERS,
-    stores: INITIAL_STORES,
-    activities: INITIAL_ACTIVITIES,
-    uploads: INITIAL_UPLOADS,
-    sales: INITIAL_SALES,
-    targets: INITIAL_TARGETS,
-    targetRequests: INITIAL_TARGET_REQUESTS,
-    targetProposals: INITIAL_TARGET_PROPOSALS,
-    scoreEvents: INITIAL_SCORE_EVENTS,
-    challenges: INITIAL_CHALLENGES,
-    products: INITIAL_PRODUCTS,
-    planograms: INITIAL_PLANOGRAMS,
-    audit: INITIAL_AUDIT,
+    version: 3,
+    users: [adminUser],
+    stores: [],
+    activities: [],
+    uploads: [],
+    sales: [],
+    targets: [],
+    targetRequests: [],
+    targetProposals: [],
+    scoreEvents: [],
+    challenges: [],
+    products: [],
+    subCategories: [],
+    planograms: [],
+    audit: [
+      {
+        id: 'log_init',
+        at: new Date().toISOString(),
+        by: 'usr_admin',
+        action: 'system.initialized',
+        details: { mode: 'clean_production_ready' },
+      },
+    ],
     settings: {
       currentPhase: 'phase1_visitors',
       weights: {
@@ -790,4 +920,8 @@ export function getInitialState(): AppState {
       },
     },
   };
+}
+
+export function getInitialState(): AppState {
+  return getCleanEmptyState();
 }

@@ -43,11 +43,11 @@ export const StoresView: React.FC<StoresViewProps> = ({
   // New store form state
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
-  const [city, setCity] = useState(currentUser?.city || 'یزد');
+  const [city, setCity] = useState(currentUser?.city || 'تهران');
   const [contact, setContact] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
-  const [agency, setAgency] = useState(currentUser?.agency || 'یزد - منطقه ۱');
+  const [agency, setAgency] = useState(currentUser?.agency || 'منطقه ۱');
   const [potential, setPotential] = useState<StorePotential>('medium');
   const [coords, setCoords] = useState<{ lat: number | null; lng: number | null; accuracy: number | null }>({
     lat: null,
@@ -128,7 +128,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
         onShowToast(`موقعیت مکانی ثبت شد (دقت: حدود ${Math.round(pos.coords.accuracy)} متر)`);
       },
       () => {
-        const fallback = { lat: 31.8974, lng: 54.3569, accuracy: 10 };
+        const fallback = { lat: 35.6892, lng: 51.3890, accuracy: 10 };
         if (forCompleteModal) {
           setCompCoords(fallback);
           setCompGpsLoading(false);
@@ -136,7 +136,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
           setCoords(fallback);
           setGpsLoading(false);
         }
-        onShowToast('موقعیت مکانی شبیه‌سازی شد (مختصات منطقه یزد ثبت شد).');
+        onShowToast('موقعیت مکانی شبیه‌سازی شد (مختصات ثبت شد).');
       },
       { timeout: 8000, enableHighAccuracy: true }
     );
@@ -384,7 +384,7 @@ export const StoresView: React.FC<StoresViewProps> = ({
                 <input
                   value={address}
                   onChange={e => setAddress(e.target.value)}
-                  placeholder="یزد، بلوار آزادشهر، نبش کوچه ۲۰"
+                  placeholder="تهران، خیابان آزادی، پلاک ۲۰"
                   className="w-full p-2.5 rounded-xl bg-[#0c1727] border border-[#283a53] text-white outline-none focus:border-blue-500"
                 />
               </div>

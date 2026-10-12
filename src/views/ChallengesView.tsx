@@ -249,7 +249,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">برند هدف (پارس حیات / پارس تیشو)</label>
+                  <label className="block text-slate-400 mb-1">برند هدف</label>
                   <select
                     value={brand}
                     onChange={e => setBrand(e.target.value)}
@@ -261,7 +261,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
                     <option value="تنو">تنو (Teno)</option>
                     <option value="پاپیا">پاپیا (Papia)</option>
                     <option value="تست">تست (Test)</option>
-                    <option value="سبد کلی پارس حیات">سبد کلی محصولات</option>
+                    <option value="سبد کلی محصولات">سبد کلی محصولات</option>
                   </select>
                 </div>
               </div>

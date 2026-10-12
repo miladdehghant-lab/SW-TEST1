@@ -27,7 +27,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const displayName = currentSession?.admin ? 'مدیر سیستم' : currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'کاربر';
   const roleTitle = currentSession?.admin ? 'مدیر ارشد سیستم' : roleLabel(currentUser?.role);
-  const agencyName = currentUser?.agency || 'یزد - دفتر مرکزی';
+  const agencyName = currentUser?.agency || 'دفتر مرکزی';
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-3 md:gap-8 px-3.5 md:px-6 py-3 bg-[#0e1726]/95 backdrop-blur border-b border-[#24354c]">
@@ -58,7 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Zone 2: Informational / Status banner */}
       <div className="hidden lg:flex items-center gap-2 text-xs text-slate-400">
-        <span>نسخه پایلوت V1</span>
+        <span>نسخه استاندارد</span>
         <span aria-hidden="true">·</span>
         <span>منطقه: {agencyName}</span>
         <span aria-hidden="true">·</span>
@@ -67,31 +67,28 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Zone 3: Actions & Current User */}
       <div className="flex items-center gap-2 md:gap-3 shrink-0">
-        {/* Architecture Review Report Button */}
-        <button
-          onClick={onOpenReview}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/40 text-blue-300 text-xs font-medium transition-colors"
-          title="مشاهده گزارش بررسی فنی کدهای بارگذاری شده"
-        >
-          <FileSearch className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">گزارش ارزیابی فنی کدها</span>
-        </button>
+        {/* Architecture Review Report Button - Only for Super Admin */}
+        {currentSession?.admin && (
+          <button
+            onClick={onOpenReview}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/40 text-blue-300 text-xs font-medium transition-colors"
+            title="مشاهده گزارش بررسی فنی کدهای بارگذاری شده (مخصوص مدیر سیستم)"
+          >
+            <FileSearch className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">گزارش ارزیابی فنی کدها</span>
+          </button>
+        )}
 
-        {/* Quick User Switcher */}
-        <QuickUserSwitcher
-          users={users}
-          currentSession={currentSession}
-          onSwitchUser={onSwitchUser}
-        />
-
-        {/* Reset Demo Data Button */}
-        <button
-          onClick={onResetData}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-[#1a2b42] border border-transparent hover:border-[#283a53] transition-colors"
-          title="بازنشانی اطلاعات نمونه پایلوت"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-        </button>
+        {/* Reset Demo Data Button - Only for Super Admin */}
+        {currentSession?.admin && (
+          <button
+            onClick={onResetData}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-[#1a2b42] border border-transparent hover:border-[#283a53] transition-colors"
+            title="بازنشانی سیستم به حالت خام"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
+        )}
 
         {/* User Card */}
         <div className="hidden sm:flex flex-col text-right pl-2 border-r border-[#24354c]">

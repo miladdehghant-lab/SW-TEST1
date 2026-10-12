@@ -59,28 +59,31 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Top Welcome & Pilot Status Banner */}
+      {/* Top Welcome Banner */}
       <div className="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-blue-950/60 to-slate-900 border border-blue-900/60 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold text-cyan-400">پایلوت استان یزد (تیم فروش پارس حیات)</span>
+            <span className="text-xs font-bold text-cyan-400">سامانه جامع مدیریت و رقابت تیم فروش</span>
             <span className="text-slate-500">·</span>
-            <span className="text-xs text-slate-300">محصولات مولفیکس، ببم، تنو، پاپیا، تست و مولپد</span>
+            <span className="text-xs text-slate-300">میدان فروش، پلانوگرام شلف و کنترل فروش</span>
           </div>
           <h2 className="text-lg md:text-xl font-bold text-white">
             خوش آمدید، {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'مدیر سیستم'}
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            سامانه پایش فعالیت‌های میدانی، تطبیق ستون‌های کارآمد سیستم و لیگ رتبه‌بندی عملکرد
+            سامانه پایش فعالیت‌های میدانی، تطبیق ستون‌های فایل فروش و لیگ رتبه‌بندی عملکرد
           </p>
         </div>
-        <button
-          onClick={onOpenReview}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/25 transition-all shrink-0"
-        >
-          <Shield className="w-4 h-4" />
-          <span>مشاهده معماری و مشخصات فنی</span>
-        </button>
+        {isAdmin && (
+          <button
+            onClick={onOpenReview}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/25 transition-all shrink-0"
+            title="مشاهده مشخصات فنی و معماری سامانه (مخصوص مدیر)"
+          >
+            <Shield className="w-4 h-4" />
+            <span>مشاهده مشخصات فنی و معماری</span>
+          </button>
+        )}
       </div>
 
       {/* Prominent Lost Points Motivational Warning Card (FOMO) */}

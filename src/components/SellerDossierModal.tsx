@@ -250,7 +250,7 @@ export const SellerDossierModal: React.FC<SellerDossierModalProps> = ({
                   <input
                     value={targetRequestNote}
                     onChange={e => setTargetRequestNote(e.target.value)}
-                    placeholder="مثال: ویزیتور جدید برای برندهای مولفیکس و تنو در یزد..."
+                    placeholder="مثال: ویزیتور جدید برای برندها و مناطق هدف..."
                     className="w-full p-2 rounded-xl bg-[#0c1727] border border-amber-500/30 text-white outline-none focus:border-amber-500"
                   />
                 </div>

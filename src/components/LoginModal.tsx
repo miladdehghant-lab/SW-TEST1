@@ -29,8 +29,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [suLast, setSuLast] = useState('');
   const [suPhone, setSuPhone] = useState('');
   const [suNational, setSuNational] = useState('');
-  const [suCity, setSuCity] = useState('یزد');
-  const [suAgency, setSuAgency] = useState('یزد - منطقه ۱');
+  const [suCity, setSuCity] = useState('تهران');
+  const [suAgency, setSuAgency] = useState('منطقه ۱');
   const [suRole, setSuRole] = useState<UserRole>('seller');
   const [suPassword, setSuPassword] = useState('Password123');
 

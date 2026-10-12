@@ -56,7 +56,7 @@ export const SalesView: React.FC<SalesViewProps> = ({
   onShowToast,
 }) => {
   const [selectedMonth, setSelectedMonth] = useState(monthDefault());
-  const [agency, setAgency] = useState(currentUser?.agency || 'یزد - منطقه ۱');
+  const [agency, setAgency] = useState(currentUser?.agency || 'منطقه ۱');
   const [coveredThrough, setCoveredThrough] = useState('2026-10-15');
   const [file, setFile] = useState<File | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -275,7 +275,7 @@ export const SalesView: React.FC<SalesViewProps> = ({
       phone: samplePhone,
       firstName: fName,
       lastName: lName,
-      city: agency.includes('یزد') ? 'یزد' : 'یزد',
+      city: agency.includes('تهران') ? 'تهران' : 'تهران',
       agency: previewBatch.agency,
       role: 'seller',
       status: 'approved',
@@ -337,7 +337,7 @@ export const SalesView: React.FC<SalesViewProps> = ({
         phone: samplePhone,
         firstName: s.suggestedFirstName,
         lastName: s.suggestedLastName,
-        city: 'یزد',
+        city: 'تهران',
         agency: previewBatch.agency,
         role: 'seller' as const,
         status: 'approved' as const,
@@ -383,7 +383,7 @@ export const SalesView: React.FC<SalesViewProps> = ({
       id: uid('str'),
       name: name.trim() || `فروشگاه ${code}`,
       code: code.trim(),
-      city: 'یزد',
+      city: 'تهران',
       agency: previewBatch.agency,
       potential: 'medium',
       ownerId: matchingUser?.id || currentUser?.id || 'usr_admin',
@@ -423,7 +423,7 @@ export const SalesView: React.FC<SalesViewProps> = ({
       id: uid('str'),
       name: s.name,
       code: s.code,
-      city: 'یزد',
+      city: 'تهران',
       agency: previewBatch.agency,
       potential: 'medium',
       ownerId: s.sellerId || currentUser?.id || 'usr_admin',
@@ -468,7 +468,7 @@ export const SalesView: React.FC<SalesViewProps> = ({
     });
 
     refreshPreviewBatch(updatedRows, state.users, state.stores, sellerAliases);
-    onShowToast('برند تمام اقلام بر اساس شرح کالا (پارس حیات / پارس تیشو) تطبیق یافت.');
+    onShowToast('برند تمام اقلام بر اساس شرح کالا با موفقیت تطبیق یافت.');
   };
 
   // Suggestion Master Action: Solve EVERYTHING in 1-Click
@@ -481,7 +481,7 @@ export const SalesView: React.FC<SalesViewProps> = ({
       phone: `0913${Math.floor(1000000 + Math.random() * 9000000)}`,
       firstName: s.suggestedFirstName,
       lastName: s.suggestedLastName,
-      city: 'یزد',
+      city: 'تهران',
       agency: previewBatch.agency,
       role: 'seller',
       status: 'approved',
@@ -495,7 +495,7 @@ export const SalesView: React.FC<SalesViewProps> = ({
       id: uid('str'),
       name: s.name,
       code: s.code,
-      city: 'یزد',
+      city: 'تهران',
       agency: previewBatch.agency,
       potential: 'medium',
       ownerId: s.sellerId || currentUser?.id || 'usr_admin',
@@ -676,28 +676,28 @@ export const SalesView: React.FC<SalesViewProps> = ({
         <div>
           <h2 className="text-base font-bold text-white flex items-center gap-2">
             <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
-            <span>بارگذاری و تطبیق هوشمند اکسل کارآمد سیستم و پارس حیات</span>
+            <span>بارگذاری و تطبیق هوشمند فایل اکسل فروش و فاکتورها</span>
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            محاسبه دقیق برگشت از فروش (کارتن منفی)، گردآوری خودکار فروشگاه‌های جدید و ارائه پیشنهادات رفع مغایرت
+            محاسبه دقیق برگشت از فروش (کارتن منفی)، گردآوری خودکار فروشگاه‌های جدید و تطبیق هوشمند اقلام
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleLoadSampleKaramad}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-950/60 hover:bg-purple-900 border border-purple-700/80 text-purple-200 text-xs font-semibold transition-colors shadow-sm"
-            title="بارگذاری داده نمونه کارآمد سیستم شامل برگشت از فروش، ویزیتور جدید و فروشگاه جدید"
+            title="بارگذاری داده نمونه فایل فروش شامل برگشت از فروش، ویزیتور جدید و فروشگاه جدید"
           >
             <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-            <span>تست فوری با نمونه کارآمد سیستم</span>
+            <span>بارگذاری فایل نمونه تستی</span>
           </button>
           <button
             onClick={downloadKaramadTemplateCSV}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-950/60 hover:bg-cyan-900 border border-cyan-700/80 text-cyan-200 text-xs font-medium transition-colors"
-            title="دانلود قالب اکسل استاندارد کارآمد سیستم (محصولات پارس حیات و پارس تیشو)"
+            title="دانلود قالب اکسل استاندارد ستون‌های سیستم فروش"
           >
             <Download className="w-3.5 h-3.5 text-cyan-400" />
-            <span>قالب اکسل «کارآمد سیستم»</span>
+            <span>قالب اکسل استاندارد</span>
           </button>
           <button
             onClick={downloadTemplateCSV}

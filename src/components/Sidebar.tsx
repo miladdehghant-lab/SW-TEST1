@@ -66,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'overview', label: 'نمای کلی', icon: <LayoutDashboard className="w-4 h-4" /> },
     {
       id: 'users',
-      label: 'کاربران و تیم ۸ نفره',
+      label: 'کاربران و تیم فروش',
       icon: <Users className="w-4 h-4" />,
       badgeCount: (userRole === 'admin' || userRole === 'rep') ? pendingUsersCount : 0
     },

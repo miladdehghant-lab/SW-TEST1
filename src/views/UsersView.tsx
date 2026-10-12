@@ -53,8 +53,8 @@ export const UsersView: React.FC<UsersViewProps> = ({
   const [convertRole, setConvertRole] = useState<UserRole>('seller');
   const [convertSupervisorId, setConvertSupervisorId] = useState('');
   const [convertOperationalStatus, setConvertOperationalStatus] = useState<'league' | 'trainee' | 'test'>('league');
-  const [convertCity, setConvertCity] = useState('یزد');
-  const [convertAgency, setConvertAgency] = useState('یزد - منطقه ۱');
+  const [convertCity, setConvertCity] = useState('تهران');
+  const [convertAgency, setConvertAgency] = useState('منطقه ۱');
   const [convertPassword, setConvertPassword] = useState('Password123');
   const [showConvertPass, setShowConvertPass] = useState(false);
 
@@ -75,8 +75,8 @@ export const UsersView: React.FC<UsersViewProps> = ({
   const [newFirst, setNewFirst] = useState('');
   const [newLast, setNewLast] = useState('');
   const [newRole, setNewRole] = useState<UserRole>('seller');
-  const [newAgency, setNewAgency] = useState(currentUser?.agency || 'یزد - منطقه ۱');
-  const [newCity, setNewCity] = useState(currentUser?.city || 'یزد');
+  const [newAgency, setNewAgency] = useState(currentUser?.agency || 'منطقه ۱');
+  const [newCity, setNewCity] = useState(currentUser?.city || 'تهران');
   const [newPassword, setNewPassword] = useState('Password123');
   const [showNewPass, setShowNewPass] = useState(false);
 
@@ -163,8 +163,8 @@ export const UsersView: React.FC<UsersViewProps> = ({
     setConvertRole(u.role);
     setConvertSupervisorId(u.supervisorId || '');
     setConvertOperationalStatus(u.operationalStatus || 'league');
-    setConvertCity(u.city || 'یزد');
-    setConvertAgency(u.agency || 'یزد - منطقه ۱');
+    setConvertCity(u.city || 'تهران');
+    setConvertAgency(u.agency || 'منطقه ۱');
     setConvertPassword(u.password || 'Password123');
     setShowConvertPass(false);
   };

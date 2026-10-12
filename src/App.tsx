@@ -69,10 +69,10 @@ export default function App() {
   };
 
   const handleResetData = () => {
-    if (window.confirm('آیا مایلید تمام داده‌های پایلوت به حالت اولیه نمونه بازنشانی شوند؟')) {
+    if (window.confirm('آیا مایلید تمام داده‌ها پاکسازی شده و سیستم به حالت کاملاً خام و آماده انتشار بازنشانی شود؟')) {
       const fresh = resetToDefaults();
       setState(fresh);
-      showToast('داده‌های پایلوت به حالت نمونه بازنشانی شدند.');
+      showToast('سیستم با موفقیت به حالت خام اولیه بازنشانی شد.');
     }
   };
 
@@ -88,8 +88,8 @@ export default function App() {
         phone: '09123153133',
         firstName: 'میلاد',
         lastName: 'دهقانی',
-        city: 'یزد',
-        agency: 'یزد - دفتر مرکزی',
+        city: 'تهران',
+        agency: 'دفتر مرکزی',
         role: 'admin',
         status: 'approved',
         password: 'Milad@3133',

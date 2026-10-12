@@ -21,7 +21,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const isSamplePhone = Boolean(currentUser?.isSamplePhone || currentUser?.phone.startsWith('0900000'));
   const [firstName, setFirstName] = useState(currentUser?.firstName || 'میلاد');
   const [lastName, setLastName] = useState(currentUser?.lastName || 'دهقانی');
-  const [city, setCity] = useState(currentUser?.city || 'یزد');
+  const [city, setCity] = useState(currentUser?.city || 'تهران');
   const [phone, setPhone] = useState(currentUser?.phone || '');
 
   // Password change form states
@@ -285,7 +285,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <div className="relative">
                 <input
                   readOnly
-                  value={currentUser?.agency || 'یزد - دفتر مرکزی'}
+                  value={currentUser?.agency || 'دفتر مرکزی'}
                   className="w-full p-2.5 rounded-xl bg-[#0c1727]/50 border border-[#283a53] text-slate-400 outline-none cursor-not-allowed"
                 />
                 <Lock className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3" />

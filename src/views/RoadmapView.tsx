@@ -77,10 +77,10 @@ export const RoadmapView: React.FC<RoadmapViewProps> = ({
         </div>
         <h2 className="text-lg md:text-xl font-bold text-white flex items-center gap-2.5">
           <Layers className="w-5 h-5 text-blue-400" />
-          <span>معماری ۴ فاز توسعه پلتفرم و پایلوت آنلاین</span>
+          <span>معماری ۴ فاز توسعه پلتفرم و استقرار میدانی</span>
         </h2>
         <p className="text-xs text-slate-300 mt-2 max-w-3xl leading-relaxed">
-          این پلتفرم بر اساس استراتژی شما در ۴ فصل (فاز ۳ ماهه) پیاده‌سازی و مستقر می‌شود. در حال حاضر فاز ۱ به صورت فعال با پایلوت ۸ نفره استان یزد کلید خورده و زیرساخت فازهای بعدی آماده اتصال است.
+          این پلتفرم بر اساس استراتژی شما در ۴ فصل (فاز ۳ ماهه) پیاده‌سازی و مستقر می‌شود. در حال حاضر فاز ۱ به صورت فعال کلید خورده و زیرساخت فازهای بعدی آماده اتصال است.
         </p>
       </div>
 
@@ -110,13 +110,13 @@ export const RoadmapView: React.FC<RoadmapViewProps> = ({
 
           <h3 className="text-sm font-bold text-white mb-1.5">فاز ۱: ویزیتورها و میدان فروش</h3>
           <p className="text-xs text-slate-400 leading-relaxed mb-4">
-            رقابت فردی ویزیتورها، چالش‌های هفتگی، ثبت شواهد عکاسی قبل/بعد چیدمان، ثبت GPS و تطبیق اکسل‌های کارآمد سیستم.
+            رقابت فردی ویزیتورها، چالش‌های هفتگی، ثبت شواهد عکاسی قبل/بعد چیدمان، ثبت GPS و تطبیق اکسل‌های فروش.
           </p>
 
           <div className="pt-3 border-t border-[#1e2f47] text-[11px] text-slate-300 space-y-1">
             <div className="flex items-center gap-1.5 text-emerald-400">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>پایلوت ۸ نفره یزد فعال</span>
+              <span>رقابت ویزیتورها فعال</span>
             </div>
             <div className="flex items-center gap-1.5 text-emerald-400">
               <CheckCircle2 className="w-3.5 h-3.5" />
@@ -281,10 +281,10 @@ export const RoadmapView: React.FC<RoadmapViewProps> = ({
           <Server className="w-5 h-5 text-emerald-400" />
           <div>
             <h3 className="text-sm font-bold text-white">
-              معماری استقرار آنلاین پایلوت ۸ نفره و هاست اختصاصی کارفرما
+              معماری استقرار آنلاین، PWA و سرور اختصاصی
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              برنامه‌ریزی دقیق برای تست چندکاربره استان یزد و استقرار نهایی روی دامنه شرکت مادر
+              برنامه‌ریزی دقیق برای تست چندکاربره بر روی موبایل، تبلت و دسکتاپ و استقرار نهایی
             </p>
           </div>
         </div>
@@ -293,10 +293,10 @@ export const RoadmapView: React.FC<RoadmapViewProps> = ({
           <div className="p-3.5 rounded-xl bg-[#0c1727] border border-[#24374f]">
             <div className="font-semibold text-cyan-300 mb-1 flex items-center gap-1.5">
               <Smartphone className="w-4 h-4" />
-              ۱. دسترسی موبایل تیم ۸ نفره (PWA)
+              ۱. دسترسی موبایل تیم میدانی (PWA)
             </div>
             <p className="text-slate-400 leading-relaxed text-[11px]">
-              ویزیتورها می‌توانند آدرس وب‌اپلیکیشن را روی گوشی‌های اندروید و iOS خود به صورت اپلیکیشن (Install PWA) نصب کنند و دوربین، مکان‌یاب و ثبت آفلاین را بدون نیاز به کافه‌بازار یا گوگل‌پلی اجرا کنند.
+              ویزیتورها می‌توانند آدرس وب‌اپلیکیشن را روی گوشی‌های اندروید و iOS خود به صورت اپلیکیشن (Install PWA) نصب کنند و دوربین، مکان‌یاب و ثبت میدانی را در هر پلتفرمی اجرا کنند.
             </p>
           </div>
 
@@ -306,17 +306,17 @@ export const RoadmapView: React.FC<RoadmapViewProps> = ({
               ۲. پایگاه داده ابری چندکاربره زنده
             </div>
             <p className="text-slate-400 leading-relaxed text-[11px]">
-              به محض ثبت ویزیت توسط هر یک از ۵ ویزیتور در سطح شهر یزد، نوتیفیکیشن و تغییر رتبه به صورت Real-time روی تبلت سرپرست و دسکتاپ مدیریت شرکت مادر ظاهر می‌شود.
+              به محض ثبت ویزیت توسط هر یک از ویزیتورها در سطح شهر، تغییر رتبه به صورت Real-time روی تبلت سرپرست و دسکتاپ مدیریت ظاهر می‌شود.
             </p>
           </div>
 
           <div className="p-3.5 rounded-xl bg-[#0c1727] border border-[#24374f]">
             <div className="font-semibold text-amber-300 mb-1 flex items-center gap-1.5">
               <Server className="w-4 h-4" />
-              ۳. استقرار روی هاست و دامین مشتری
+              ۳. استقرار روی هاست و دامین اختصاصی
             </div>
             <p className="text-slate-400 leading-relaxed text-[11px]">
-              پروژه دارای پکیج مستقل Docker و اسکریپت خروجی است که به راحتی روی سرور اختصاصی (VPS یا Cloud)، دیتابیس PostgreSQL و دامین اختصاصی شرکت خریدار مستقر می‌شود.
+              پروژه دارای ساختار استاندارد وب و خروجی است که به راحتی روی هر سرور ابری، دیتابیس آنلاین و دامین اختصاصی شرکت مستقر و قابل بهره‌برداری می‌شود.
             </p>
           </div>
         </div>

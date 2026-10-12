@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { AppState, User, ProductCatalogItem, Planogram, PlanogramSlot } from '../types';
+import { AppState, User, ProductCatalogItem, Planogram, PlanogramSlot, SubCategoryDef } from '../types';
 import { num, uid, SIMPLE_BRANDS, fmtDate } from '../utils/formatters';
 import {
   guessSubCategory,
@@ -29,6 +29,8 @@ import {
   Grid,
   Info,
   HelpCircle,
+  FolderPlus,
+  Tag,
 } from 'lucide-react';
 
 interface ProductsViewProps {
@@ -96,16 +98,101 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
   // Strictly only Main Admin can create, edit, or delete products and planograms
   const canManage = Boolean(isAdmin);
 
-  // Subcategories derived dynamically
+  // Subcategories state (customizable by manager)
+  const subCategories: SubCategoryDef[] = state.subCategories || [];
+  const [showSubCatModal, setShowSubCatModal] = useState(false);
+  const [subCatName, setSubCatName] = useState('');
+  const [subCatBrand, setSubCatBrand] = useState('مولفیکس');
+  const [subCatTargetWeight, setSubCatTargetWeight] = useState('1.5');
+  const [subCatDesc, setSubCatDesc] = useState('');
+  const [subCatIsStrategic, setSubCatIsStrategic] = useState(true);
+
+  // Distinct brands derived dynamically from products and custom subcategories
+  const availableBrands = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach(p => {
+      if (p.brand && p.brand.trim()) set.add(p.brand.trim());
+    });
+    subCategories.forEach(sc => {
+      if (sc.brand && sc.brand.trim() && sc.brand !== 'عمومی' && sc.brand !== 'همه') {
+        set.add(sc.brand.trim());
+      }
+    });
+    return Array.from(set);
+  }, [products, subCategories]);
+
+  // Subcategories derived dynamically from products AND defined subcategories
   const availableSubCategories = useMemo(() => {
     const list = new Set<string>();
+    subCategories.forEach(sc => {
+      if (selectedBrand === 'all' || sc.brand === selectedBrand || sc.brand === 'عمومی') {
+        if (sc.name) list.add(sc.name);
+      }
+    });
     products.forEach(p => {
       if (selectedBrand === 'all' || p.brand === selectedBrand) {
         if (p.subCategory) list.add(p.subCategory);
       }
     });
     return Array.from(list);
-  }, [products, selectedBrand]);
+  }, [products, subCategories, selectedBrand]);
+
+  // Create or add custom subcategory
+  const handleCreateSubCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subCatName.trim()) {
+      onShowToast('لطفاً عنوان زیرگروه را وارد نمایید.');
+      return;
+    }
+
+    const targetBrandName = subCatBrand.trim() || 'عمومی';
+
+    const newDef: SubCategoryDef = {
+      id: uid('subcat'),
+      name: subCatName.trim(),
+      brand: targetBrandName,
+      targetWeight: Number(subCatTargetWeight) || 1.2,
+      description: subCatDesc.trim() || undefined,
+      isStrategicTarget: subCatIsStrategic,
+      isCustom: true,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updated = [newDef, ...subCategories];
+    onUpdateState({
+      ...state,
+      subCategories: updated,
+      audit: [
+        {
+          id: uid('log'),
+          at: new Date().toISOString(),
+          by: currentUser?.id || 'usr_admin',
+          action: 'subcategory.created',
+          details: { name: newDef.name, brand: newDef.brand },
+        },
+        ...state.audit,
+      ],
+    });
+
+    onShowToast(`زیرگروه «${newDef.name}» برای برند ${newDef.brand} با موفقیت ثبت شد.`);
+    setSubCatName('');
+    setSubCatDesc('');
+    setShowSubCatModal(false);
+  };
+
+  // Delete custom subcategory
+  const handleDeleteSubCategory = (id: string) => {
+    const item = subCategories.find(s => s.id === id);
+    if (!item) return;
+    if (!window.confirm(`آیا از حذف زیرگروه «${item.name}» اطمینان دارید؟`)) return;
+
+    const updated = subCategories.filter(s => s.id !== id);
+    onUpdateState({
+      ...state,
+      subCategories: updated,
+    });
+    onShowToast(`زیرگروه «${item.name}» حذف شد.`);
+  };
 
   // Filtered products list
   const filteredProducts = useMemo(() => {
@@ -462,20 +549,29 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold text-emerald-400">سیستم مدیریت ماتریس کالاها و استانداردهای چیدمان</span>
             <span className="text-slate-500">·</span>
-            <span className="text-xs text-slate-300">پارس حیات (تست، مولفیکس، تنو، پاپیا، مولپد، ببم)</span>
+            <span className="text-xs text-slate-300">سبد برندها و اقلام کالایی استاندارد</span>
           </div>
           <h2 className="text-lg md:text-xl font-bold text-white flex items-center gap-2">
             <Package className="w-5 h-5 text-emerald-400" />
             <span>شناسنامه کالاها، تفکیک برند و پلنوگرام اصولی قفسه‌ها</span>
           </h2>
           <p className="text-xs text-slate-400 mt-1 leading-relaxed max-w-3xl">
-            شناسایی خودکار کدها و اقلام کالا از فایل‌های روزانه کارآمد سیستم، تفکیک هوشمند بر اساس برند و زیرگروه (مایع لباس، نرم‌کننده، پوشک، دستمال و...)، تعریف قفسه مرجع (پلنوگرام اصولی) توسط مدیر و تطبیق هوشمند شواهد تصویری ویزیتورها جهت امتیازدهی چیدمان.
+            شناسایی خودکار کدها و اقلام کالا از فایل‌های روزانه سیستم فروش، تفکیک هوشمند بر اساس برند و زیرگروه (مایع لباس، نرم‌کننده، پوشک، دستمال و...)، تعریف قفسه مرجع (پلنوگرام اصولی) توسط مدیر و تطبیق هوشمند شواهد تصویری ویزیتورها جهت امتیازدهی چیدمان.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           {canManage ? (
             <>
+              <button
+                onClick={() => setShowSubCatModal(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-lg shadow-purple-600/25 transition-all"
+                title="مدیریت، ایجاد و ویرایش زیرگروه‌ها و دسته‌های کالا جهت تارگت‌گذاری"
+              >
+                <Sliders className="w-4 h-4" />
+                <span>مدیریت دسته‌ها و زیرگروه‌ها</span>
+              </button>
+
               <button
                 onClick={handleAutoDetectFromSales}
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/25 transition-all"
@@ -566,7 +662,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                   همه برندها ({num(products.length)})
                 </button>
 
-                {SIMPLE_BRANDS.map(b => {
+                {availableBrands.map(b => {
                   const count = products.filter(p => p.brand === b).length;
                   return (
                     <button
@@ -635,6 +731,17 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                     </button>
                   );
                 })}
+
+                {canManage && (
+                  <button
+                    onClick={() => setShowSubCatModal(true)}
+                    className="px-2.5 py-1 rounded-lg text-[11px] bg-purple-500/15 text-purple-300 hover:bg-purple-500/25 border border-purple-500/40 flex items-center gap-1 font-semibold transition-colors mr-auto"
+                    title="افزودن و مدیریت زیرگروه‌ها"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>افزودن زیرگروه</span>
+                  </button>
+                )}
               </div>
             )}
 
@@ -739,7 +846,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
 
                 {/* Product Title & Info */}
                 <div className="space-y-1.5 flex-1">
-                  <h4 className="text-xs font-bold text-white leading-snug line-clamp-2" title={p.name}>
+                  <h4 className="text-xs font-bold text-white leading-relaxed break-words" title={p.name}>
                     {p.name}
                   </h4>
 
@@ -879,86 +986,109 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                         <span className="text-slate-500 text-[10px]">{activePlanogram.colsPerShelf} جایگاه محصول</span>
                       </div>
 
-                      {/* Shelf Slots */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 gap-2.5 p-2.5 rounded-xl bg-[#0f1b2b] border border-[#1d2f47]">
-                        {Array.from({ length: activePlanogram.colsPerShelf }).map((_, colIdx) => {
-                          const slot = activePlanogram.slots.find(
-                            s => s.shelfIndex === shelfIdx && s.colIndex === colIdx
-                          );
-                          const product = slot?.productId ? products.find(p => p.id === slot.productId) : null;
-                          const isSelected = selectedShelfSlot?.shelfIndex === shelfIdx && selectedShelfSlot?.colIndex === colIdx;
+                      {/* Shelf Slots - Guaranteed Single Continuous Line */}
+                      <div className="overflow-x-auto pb-2 scrollbar-thin">
+                        <div
+                          className="grid gap-2.5 p-2.5 rounded-xl bg-[#0f1b2b] border border-[#1d2f47]"
+                          style={{
+                            gridTemplateColumns: `repeat(${activePlanogram.colsPerShelf}, minmax(${
+                              activePlanogram.colsPerShelf > 6 ? '125px' : activePlanogram.colsPerShelf > 4 ? '140px' : '160px'
+                            }, 1fr))`,
+                            minWidth: `${activePlanogram.colsPerShelf * (activePlanogram.colsPerShelf > 6 ? 125 : activePlanogram.colsPerShelf > 4 ? 140 : 160)}px`,
+                          }}
+                        >
+                          {Array.from({ length: activePlanogram.colsPerShelf }).map((_, colIdx) => {
+                            const slot = activePlanogram.slots.find(
+                              s => s.shelfIndex === shelfIdx && s.colIndex === colIdx
+                            );
+                            const product = slot?.productId ? products.find(p => p.id === slot.productId) : null;
+                            const isSelected = selectedShelfSlot?.shelfIndex === shelfIdx && selectedShelfSlot?.colIndex === colIdx;
 
-                          return (
-                            <div
-                              key={colIdx}
-                              onClick={() => {
-                                if (canManage) {
-                                  setSelectedShelfSlot({ shelfIndex: shelfIdx, colIndex: colIdx });
-                                }
-                              }}
-                              onDragOver={e => {
-                                if (canManage) {
-                                  e.preventDefault();
-                                }
-                              }}
-                              onDrop={e => {
-                                if (canManage) {
-                                  e.preventDefault();
-                                  const pid = e.dataTransfer.getData('text/plain') || draggedProductId;
-                                  if (pid) {
-                                    handleAssignProductToSlotDirect(shelfIdx, colIdx, pid);
+                            return (
+                              <div
+                                key={colIdx}
+                                onClick={() => {
+                                  if (canManage) {
+                                    setSelectedShelfSlot({ shelfIndex: shelfIdx, colIndex: colIdx });
                                   }
-                                }
-                              }}
-                              className={`aspect-[4/5] rounded-xl border-2 transition-all p-2 flex flex-col items-center justify-between cursor-pointer relative ${
-                                isSelected
-                                  ? 'border-cyan-400 bg-cyan-950/40 shadow-lg shadow-cyan-500/20'
-                                  : product
-                                  ? 'border-blue-500/40 bg-[#142337] hover:border-blue-400'
-                                  : 'border-dashed border-[#233852] bg-[#0c1624] hover:border-cyan-500/60'
-                              }`}
-                              title={canManage ? 'کلیک برای انتخاب کالا یا کالا را مستقیماً از پالت بکشید و اینجا رها کنید (Drag & Drop)' : undefined}
-                            >
-                              {product ? (
-                                <>
-                                  <div className="w-full flex items-center justify-between text-[10px]">
-                                    <span className="px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 font-bold">
-                                      {product.brand}
-                                    </span>
-                                    <span className="text-slate-400 font-mono text-[9px]">{slot?.facingCount || 2} رخ</span>
-                                  </div>
-
-                                  <div className="flex-1 w-full flex items-center justify-center p-1">
-                                    <img
-                                      src={product.imageUrl || getProductPlaceholderImage(product.brand, product.subCategory, product.name)}
-                                      alt={product.name}
-                                      className="max-h-24 max-w-full object-contain drop-shadow"
-                                    />
-                                  </div>
-
-                                  <div className="w-full text-center">
-                                    <div className="text-[10px] font-bold text-white line-clamp-1" title={product.name}>
-                                      {product.name}
+                                }}
+                                onDragOver={e => {
+                                  if (canManage) {
+                                    e.preventDefault();
+                                  }
+                                }}
+                                onDrop={e => {
+                                  if (canManage) {
+                                    e.preventDefault();
+                                    const pid = e.dataTransfer.getData('text/plain') || draggedProductId;
+                                    if (pid) {
+                                      handleAssignProductToSlotDirect(shelfIdx, colIdx, pid);
+                                    }
+                                  }
+                                }}
+                                className={`min-h-[220px] rounded-xl border-2 transition-all p-2 flex flex-col items-center justify-between cursor-pointer relative ${
+                                  isSelected
+                                    ? 'border-cyan-400 bg-cyan-950/40 shadow-lg shadow-cyan-500/20'
+                                    : product
+                                    ? 'border-blue-500/40 bg-[#142337] hover:border-blue-400'
+                                    : 'border-dashed border-[#233852] bg-[#0c1624] hover:border-cyan-500/60'
+                                }`}
+                                title={canManage ? 'کلیک برای انتخاب کالا یا کالا را مستقیماً از پالت بکشید و اینجا رها کنید (Drag & Drop)' : undefined}
+                              >
+                                {product ? (
+                                  <>
+                                    <div className="w-full flex items-center justify-between text-[10px]">
+                                      <span className="px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 font-bold">
+                                        {product.brand}
+                                      </span>
+                                      <span className="text-slate-400 font-mono text-[9px]">{slot?.facingCount || 2} رخ</span>
                                     </div>
-                                    <div className="text-[9px] text-cyan-300 line-clamp-1">
-                                      {product.subCategory}
+
+                                    <div className="flex-1 w-full flex items-center justify-center p-1 my-1">
+                                      <img
+                                        src={product.imageUrl || getProductPlaceholderImage(product.brand, product.subCategory, product.name)}
+                                        alt={product.name}
+                                        className="max-h-24 max-w-full object-contain drop-shadow"
+                                      />
                                     </div>
+
+                                    <div className="w-full text-center px-1">
+                                      <div
+                                        className="text-[10px] sm:text-[11px] font-bold text-white leading-tight break-words text-center"
+                                        title={product.name}
+                                      >
+                                        {product.name}
+                                      </div>
+                                      {product.packVariant && (
+                                        <div className="text-[9px] text-indigo-300 font-semibold mt-0.5 leading-tight">
+                                          {product.packVariant}
+                                        </div>
+                                      )}
+                                      <div className="text-[9px] text-cyan-300 mt-0.5 leading-tight">
+                                        {product.subCategory}
+                                      </div>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="flex-1 flex flex-col items-center justify-center text-slate-500 text-center gap-1">
+                                    <Plus className="w-4 h-4 opacity-50" />
+                                    <span className="text-[10px]">جایگاه خالی</span>
+                                    {canManage && <span className="text-[8px] text-cyan-400">کلیک یا Drag & Drop کالا</span>}
                                   </div>
-                                </>
-                              ) : (
-                                <div className="flex-1 flex flex-col items-center justify-center text-slate-500 text-center gap-1">
-                                  <Plus className="w-4 h-4 opacity-50" />
-                                  <span className="text-[10px]">جایگاه خالی</span>
-                                  {canManage && <span className="text-[8px] text-cyan-400">کلیک برای انتخاب کالا</span>}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Physical Shelf Wood/Metal Plank */}
+                        <div
+                          className="h-2.5 rounded-full bg-gradient-to-r from-slate-700 via-slate-400 to-slate-700 shadow-md mt-2"
+                          style={{
+                            minWidth: `${activePlanogram.colsPerShelf * (activePlanogram.colsPerShelf > 6 ? 125 : activePlanogram.colsPerShelf > 4 ? 140 : 160)}px`,
+                          }}
+                        ></div>
                       </div>
-
-                      {/* Physical Shelf Wood/Metal Plank */}
-                      <div className="h-2 rounded-full bg-gradient-to-r from-slate-700 via-slate-500 to-slate-700 shadow-md"></div>
                     </div>
                   );
                 })}
@@ -1302,20 +1432,28 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 mb-1">برند *</label>
-                  <select
+                  <label className="block text-slate-300 mb-1">برند کالا *</label>
+                  <input
+                    required
+                    list="brand-suggestions"
                     value={prodBrand}
                     onChange={e => {
                       setProdBrand(e.target.value);
-                      setProdSubCategory(guessSubCategory(prodName, e.target.value));
+                      if (!prodSubCategory || prodSubCategory === 'عمومی') {
+                        setProdSubCategory(guessSubCategory(prodName, e.target.value));
+                      }
                     }}
+                    placeholder="نام برند (مثلاً تست، مولفیکس یا برند جدید...)"
                     className="w-full p-2.5 rounded-xl bg-[#0c1727] border border-[#283a53] text-white outline-none focus:border-blue-500 font-bold"
-                  >
-                    {SIMPLE_BRANDS.map(b => (
-                      <option key={b} value={b}>{b}</option>
+                  />
+                  <datalist id="brand-suggestions">
+                    {availableBrands.map(b => (
+                      <option key={b} value={b} />
                     ))}
-                    <option value="سایر">سایر</option>
-                  </select>
+                    {SIMPLE_BRANDS.map(b => (
+                      <option key={b} value={b} />
+                    ))}
+                  </datalist>
                 </div>
               </div>
 
@@ -1564,6 +1702,149 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                   className="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold shadow-lg shadow-cyan-600/30"
                 >
                   ایجاد قفسه پلنوگرام
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: MANAGE & ADD SUBCATEGORIES / CUSTOM BRAND CATEGORIES              */}
+      {/* ========================================================================= */}
+      {showSubCatModal && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#121e30] border border-purple-500/40 rounded-2xl p-5 max-w-lg w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#283a53] pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-purple-400" />
+                <span>مدیریت دسته‌ها، زیرگروه‌ها و برندها</span>
+              </h3>
+              <button onClick={() => setShowSubCatModal(false)} className="text-slate-400 hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* List of existing subcategories */}
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-slate-300">زیرگروه‌های تعریف‌شده فعلی ({num(subCategories.length)}):</div>
+              <div className="max-h-44 overflow-y-auto space-y-1.5 p-1 border border-[#1e2f47] rounded-xl bg-[#09121f]">
+                {subCategories.length === 0 ? (
+                  <div className="text-center py-4 text-slate-500 text-xs">هیچ زیرگروه سفارشی ثبت نشده است. از فرم زیر اضافه کنید.</div>
+                ) : (
+                  subCategories.map(sc => (
+                    <div
+                      key={sc.id}
+                      className="flex items-center justify-between p-2 rounded-lg bg-[#121e30] border border-[#233852] text-xs"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-300 font-bold">
+                          {sc.brand}
+                        </span>
+                        <span className="text-white font-medium">{sc.name}</span>
+                        {sc.targetWeight && (
+                          <span className="text-[10px] text-slate-400">ضریب: {sc.targetWeight}</span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleDeleteSubCategory(sc.id)}
+                        className="p-1 rounded text-slate-400 hover:text-rose-400 transition-colors"
+                        title="حذف زیرگروه"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Form to create new subcategory */}
+            <form onSubmit={handleCreateSubCategory} className="space-y-3 pt-3 border-t border-[#1e2f47] text-xs">
+              <div className="font-semibold text-purple-300">افزودن دسته‌بندی / زیرگروه جدید:</div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 mb-1">نام زیرگروه *</label>
+                  <input
+                    required
+                    value={subCatName}
+                    onChange={e => setSubCatName(e.target.value)}
+                    placeholder="مثال: مایع لباسشویی، پوشک کامل..."
+                    className="w-full p-2.5 rounded-xl bg-[#0c1727] border border-[#283a53] text-white outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 mb-1">برند مربوطه *</label>
+                  <input
+                    required
+                    list="brand-subcat-suggestions"
+                    value={subCatBrand}
+                    onChange={e => setSubCatBrand(e.target.value)}
+                    placeholder="نام برند مورد نظر"
+                    className="w-full p-2.5 rounded-xl bg-[#0c1727] border border-[#283a53] text-white outline-none focus:border-purple-500 font-bold"
+                  />
+                  <datalist id="brand-subcat-suggestions">
+                    {availableBrands.map(b => (
+                      <option key={b} value={b} />
+                    ))}
+                    {SIMPLE_BRANDS.map(b => (
+                      <option key={b} value={b} />
+                    ))}
+                  </datalist>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 mb-1">ضریب وزنی تارگت</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={subCatTargetWeight}
+                    onChange={e => setSubCatTargetWeight(e.target.value)}
+                    className="w-full p-2 rounded-xl bg-[#0c1727] border border-[#283a53] text-white outline-none focus:border-purple-500 font-mono"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-6">
+                  <input
+                    type="checkbox"
+                    id="isStrategic"
+                    checked={subCatIsStrategic}
+                    onChange={e => setSubCatIsStrategic(e.target.checked)}
+                    className="rounded border-[#283a53] bg-[#0c1727] text-purple-600 focus:ring-0"
+                  />
+                  <label htmlFor="isStrategic" className="text-slate-300 cursor-pointer">
+                    زیرگروه استراتژیک اولویت‌دار
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 mb-1">توضیحات و اهداف شلف (اختیاری)</label>
+                <input
+                  value={subCatDesc}
+                  onChange={e => setSubCatDesc(e.target.value)}
+                  placeholder="مثال: اولویت اول چیدمان در راهروی نوزاد..."
+                  className="w-full p-2 rounded-xl bg-[#0c1727] border border-[#283a53] text-white outline-none focus:border-purple-500 text-[11px]"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSubCatModal(false)}
+                  className="px-4 py-2 rounded-xl bg-[#1c2e47] text-slate-300 hover:text-white"
+                >
+                  بستن
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-lg shadow-purple-600/30"
+                >
+                  افزودن زیرگروه
                 </button>
               </div>
             </form>

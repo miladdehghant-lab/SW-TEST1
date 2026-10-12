@@ -161,7 +161,7 @@ export const ArchitectureReviewModal: React.FC<ArchitectureReviewModalProps> = (
               <div className="flex items-start gap-2.5">
                 <span className="w-6 h-6 rounded-full bg-emerald-600/30 text-emerald-300 text-xs flex items-center justify-center shrink-0 font-bold">۳</span>
                 <p className="text-xs text-slate-300">
-                  <b className="text-white">پایلوت ۸ نفره استان یزد و استقرار نهایی:</b> معماری آماده است تا به محض عبور از تست محلی، پایگاه داده آنلاین چندکاربره (Cloud Database) و در نهایت پکیج داکر برای استقرار روی هاست و دامین اختصاصی شرکت کارفرما فعال گردد.
+                  <b className="text-white">آمادگی استقرار و چندکاربره ابری:</b> معماری کامپوننت‌ها به گونه‌ای تفکیک شده که علاوه بر اجرا در انواع دیوایس‌ها و سیستم‌عامل‌ها (PWA موبایل، تبلت و وب)، به راحتی به پایگاه داده ابری (Cloud Database) و هاست اختصاصی سازمان شما متصل می‌گردد.
                 </p>
               </div>
             </div>

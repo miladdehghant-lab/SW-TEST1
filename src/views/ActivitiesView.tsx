@@ -112,11 +112,11 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
         setGpsLoading(false);
         // Fallback realistic location
         setCoords({
-          lat: 31.8974,
-          lng: 54.3569,
+          lat: 35.6892,
+          lng: 51.3890,
           accuracy: 8,
         });
-        onShowToast('موقعیت مکانی شبیه‌سازی شد (محدوده یزد).');
+        onShowToast('موقعیت مکانی شبیه‌سازی شد.');
       },
       { timeout: 8000, enableHighAccuracy: true }
     );
@@ -143,10 +143,10 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
       id: uid('str'),
       name: quickStoreName.trim(),
       code: `FIELD-${Date.now().toString().slice(-4)}`,
-      city: currentUser?.city || 'یزد',
+      city: currentUser?.city || 'تهران',
       address: quickStoreAddress.trim() || undefined,
       phone: quickStorePhone.trim() || undefined,
-      agency: currentUser?.agency || 'یزد - منطقه ۱',
+      agency: currentUser?.agency || 'منطقه ۱',
       potential: 'medium',
       ownerId: currentUser?.id || 'usr_admin',
       status: 'provisional',

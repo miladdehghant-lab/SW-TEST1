@@ -216,6 +216,17 @@ export interface LostOpportunity {
   reason: string;
 }
 
+export interface SubCategoryDef {
+  id: string;
+  name: string; // e.g. مایع لباسشویی، پوشک کامل کودک
+  brand: string; // e.g. تست، مولفیکس، تنو، پاپیا، مولپد، ببم، یا عمومی
+  targetWeight?: number; // اولویت و ضریب اهمیت در تارگت‌گذاری (مثلاً ۱.۵ یا ۲)
+  description?: string; // توضیحات هدف‌گذاری یا ارزش استراتژیک
+  isStrategicTarget?: boolean; // آیا به عنوان تارگت اختصاصی مهم در نظر گرفته شده؟
+  isCustom?: boolean; // آیا توسط مدیر به صورت دستی تعریف شده؟
+  createdAt: string;
+}
+
 export interface ProductCatalogItem {
   id: string;
   sku: string;
@@ -303,6 +314,7 @@ export interface AppState {
   scoreEvents: ScoreEvent[];
   challenges: WeeklyChallenge[];
   products?: ProductCatalogItem[];
+  subCategories?: SubCategoryDef[];
   planograms?: Planogram[];
   audit: AuditLog[];
   settings: AppSettings;
