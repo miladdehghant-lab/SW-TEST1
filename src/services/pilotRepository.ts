@@ -96,12 +96,19 @@ let writeQueue: Promise<unknown> = Promise.resolve();
 export function persistCloudState(state: AppState, userId: string): Promise<void> {
   if (!supabase) return Promise.reject(new Error('تنظیمات اتصال پایگاه داده کامل نیست.'));
   // Serialize writes in this browser to avoid overlapping full-document saves.
+  const safeState: AppState = {
+    ...state,
+    users: (state.users || []).map(user => {
+      const { password: _password, nationalId: _nationalId, ...safeUser } = user;
+      return safeUser as User;
+    }),
+  };
   writeQueue = writeQueue.then(async () => {
     const { error } = await supabase!
       .from('app_state')
       .upsert({
         id: 'global',
-        state_json: state,
+        state_json: safeState,
         updated_by: userId,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'id' });
