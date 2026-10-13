@@ -34,6 +34,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
     const hash = window.location.hash;
@@ -48,6 +49,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
       onShowToast('اتصال پایگاه داده تنظیم نشده است؛ تنظیمات Supabase را بررسی کنید.');
       return;
     }
+    setFeedback(null);
     setBusy(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ phone: toE164IranianPhone(phone), password });
@@ -63,25 +65,33 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
         throw new Error('در این نسخه آزمایشی، ورود عملیاتی فعلاً برای مدیر سامانه فعال است.');
       }
       onLoginSuccess({ admin: true, id: data.user.id });
+      setFeedback({ kind: 'success', message: 'ورود موفق بود؛ در حال باز کردن داشبورد…' });
       onShowToast('با موفقیت وارد STORE WAR شدید.');
     } catch (err) {
-      onShowToast(err instanceof Error ? err.message : 'ورود ناموفق بود؛ شماره، رمز و تنظیمات Auth را بررسی کنید.');
+      const message = err instanceof Error ? err.message : 'ورود ناموفق بود؛ شماره، رمز و تنظیمات Auth را بررسی کنید.';
+      setFeedback({ kind: 'error', message });
+      onShowToast(message);
     } finally { setBusy(false); }
   };
 
   const handleForgot = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase) return onShowToast('اتصال Supabase تنظیم نشده است.');
+    setFeedback(null);
     setBusy(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: 'https://miladdehghant-lab.github.io/SW-TEST1/'
       });
       if (error) throw error;
-      onShowToast('اگر امکان بازیابی برای این حساب فعال باشد، دستورالعمل بازیابی ارسال می‌شود.');
+      const message = 'درخواست بازیابی ارسال شد. ایمیل ورودی و پوشه Spam را بررسی کن؛ اگر ایمیلی نیامد، باید تنظیمات ایمیل و وجود ایمیل در حساب بررسی شود.';
+      setFeedback({ kind: 'success', message });
+      onShowToast(message);
       setScreen('login');
     } catch (err) {
-      onShowToast(err instanceof Error ? err.message : 'ارسال لینک بازیابی انجام نشد.');
+      const message = err instanceof Error ? err.message : 'ارسال لینک بازیابی انجام نشد.';
+      setFeedback({ kind: 'error', message });
+      onShowToast(message);
     } finally { setBusy(false); }
   };
 
@@ -148,6 +158,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
         </div>
         {!supabaseConfigured && <div className="mb-4 rounded-xl border border-amber-700 bg-amber-950/40 p-3 text-xs leading-6 text-amber-100"><Database className="inline w-4 h-4 ml-1" />اتصال پایگاه داده تنظیم نشده است.</div>}
         <h3 className="text-base font-bold text-white mb-4 text-center">{titles[screen]}</h3>
+        {feedback && <div role="status" className={`mb-4 rounded-xl border p-3 text-sm leading-6 ${feedback.kind === 'error' ? 'border-red-700 bg-red-950/50 text-red-100' : 'border-emerald-700 bg-emerald-950/40 text-emerald-100'}`}>{feedback.message}</div>}
         <form onSubmit={submit} className="space-y-4 text-xs">
           {screen === 'signup' && <>
             <div><label className="block text-slate-400 mb-1">نام و نام خانوادگی</label><input required value={name} onChange={e => setName(e.target.value)} className={fieldClass} autoComplete="name" /></div>
@@ -160,8 +171,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
           <button disabled={busy || !supabaseConfigured} type="submit" className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold transition-colors shadow-lg">{busy ? 'در حال انجام…' : titles[screen]}</button>
         </form>
         <div className="flex flex-col items-center gap-3 mt-5 text-xs">
-          {screen === 'login' && <><button type="button" onClick={() => setScreen('forgot')} className="text-blue-300 hover:text-white">فراموشی رمز عبور</button><button type="button" onClick={() => setScreen('signup')} className="text-cyan-300 hover:text-white"><UserPlus className="inline w-4 h-4 ml-1" />ثبت‌نام کاربر جدید</button></>}
-          {screen !== 'login' && screen !== 'reset' && <button type="button" onClick={() => setScreen('login')} className="text-slate-300 hover:text-white"><ArrowLeft className="inline w-4 h-4 ml-1" />بازگشت به ورود</button>}
+          {screen === 'login' && <><button type="button" onClick={() => { setFeedback(null); setScreen('forgot'); }} className="text-blue-300 hover:text-white">فراموشی رمز عبور</button><button type="button" onClick={() => { setFeedback(null); setScreen('signup'); }} className="text-cyan-300 hover:text-white"><UserPlus className="inline w-4 h-4 ml-1" />ثبت‌نام کاربر جدید</button></>}
+          {screen !== 'login' && screen !== 'reset' && <button type="button" onClick={() => { setFeedback(null); setScreen('login'); }} className="text-slate-300 hover:text-white"><ArrowLeft className="inline w-4 h-4 ml-1" />بازگشت به ورود</button>}
           {screen === 'reset' && <p className="text-slate-400 text-center leading-5">اگر این صفحه پس از کلیک روی لینک ایمیل باز شده، رمز جدید را وارد کنید.</p>}
         </div>
         {screen === 'login' && <p className="text-[11px] text-slate-500 leading-5 mt-5 text-center">حساب باید در Supabase ساخته شده باشد و پس از تأیید مدیر امکان ورود خواهد داشت.</p>}
