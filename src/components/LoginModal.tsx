@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AuthSession, AppState } from '../types';
 import { supabase, supabaseConfigured } from '../lib/supabase';
-import { digits } from '../utils/formatters';
-import { Key, Phone, ShieldCheck, Database, UserPlus, Mail, ArrowLeft } from 'lucide-react';
+import { Database, UserPlus, Mail, ArrowLeft } from 'lucide-react';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -14,20 +13,11 @@ interface LoginModalProps {
 
 type Screen = 'login' | 'signup' | 'forgot' | 'reset';
 
-function toE164IranianPhone(value: string): string {
-  const clean = digits(value).replace(/[^0-9+]/g, '');
-  if (clean.startsWith('+')) return clean;
-  if (clean.startsWith('0098')) return '+' + clean.slice(2);
-  if (clean.startsWith('98')) return '+' + clean;
-  if (clean.startsWith('0')) return '+98' + clean.slice(1);
-  return '+98' + clean;
-}
 
 const fieldClass = 'w-full px-3 py-2.5 rounded-xl bg-[#0c1727] border border-[#283a53] text-white outline-none focus:border-blue-500';
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, onShowToast }) => {
   const [screen, setScreen] = useState<Screen>('login');
-  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState<'seller' | 'supervisor' | 'support' | 'rep'>('seller');
@@ -52,7 +42,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
     setFeedback(null);
     setBusy(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ phone: toE164IranianPhone(phone), password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error || !data.user) throw error || new Error('ورود انجام نشد.');
       const { data: profile, error: profileError } = await supabase.from('profiles').select('id,role,status').eq('id', data.user.id).single();
       if (profileError) throw profileError;
@@ -68,7 +58,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
       setFeedback({ kind: 'success', message: 'ورود موفق بود؛ در حال باز کردن داشبورد…' });
       onShowToast('با موفقیت وارد STORE WAR شدید.');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'ورود ناموفق بود؛ شماره، رمز و تنظیمات Auth را بررسی کنید.';
+      const message = err instanceof Error ? err.message : 'ورود ناموفق بود؛ ایمیل، رمز و تنظیمات Auth را بررسی کنید.';
       setFeedback({ kind: 'error', message });
       onShowToast(message);
     } finally { setBusy(false); }
@@ -120,23 +110,22 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
     if (password.length < 8) return onShowToast('رمز عبور باید حداقل ۸ کاراکتر داشته باشد.');
     setBusy(true);
     try {
-      const normalizedPhone = toE164IranianPhone(phone);
       const { data, error } = await supabase.auth.signUp({
-        phone: normalizedPhone,
+        email: email.trim(),
         password,
-        options: { data: { display_name: name.trim(), requested_role: role, phone: normalizedPhone } }
+        options: { data: { display_name: name.trim(), requested_role: role } }
       });
       if (error) throw error;
       if (data.session) {
         setScreen('login');
         onShowToast('درخواست ثبت‌نام ثبت شد؛ پس از تأیید مدیر امکان ورود خواهید داشت.');
       } else {
-        onShowToast('درخواست ثبت‌نام ارسال شد. اگر تأیید شماره موبایل در Supabase فعال است، کد پیامکی را تکمیل کنید؛ سپس حساب در انتظار تأیید مدیر خواهد بود.');
+        onShowToast('درخواست ثبت‌نام ارسال شد. اگر تأیید ایمیل فعال است، صندوق ورودی ایمیل را بررسی کنید؛ سپس حساب در انتظار تأیید مدیر خواهد بود.');
         setScreen('login');
       }
       setPassword('');
     } catch (err) {
-      onShowToast(err instanceof Error ? err.message : 'ثبت‌نام انجام نشد؛ تنظیمات تأیید شماره و پایگاه داده را بررسی کنید.');
+      onShowToast(err instanceof Error ? err.message : 'ثبت‌نام انجام نشد؛ تنظیمات تأیید ایمیل و پایگاه داده را بررسی کنید.');
     } finally { setBusy(false); }
   };
 
@@ -164,7 +153,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
             <div><label className="block text-slate-400 mb-1">نام و نام خانوادگی</label><input required value={name} onChange={e => setName(e.target.value)} className={fieldClass} autoComplete="name" /></div>
             <div><label className="block text-slate-400 mb-1">نقش درخواستی</label><select value={role} onChange={e => setRole(e.target.value as typeof role)} className={fieldClass}><option value="seller">فروشنده</option><option value="supervisor">سرپرست فروش</option><option value="support">کارشناس پشتیبانی فروش</option><option value="rep">نماینده</option></select><p className="text-slate-500 mt-1">نقش و دسترسی نهایی پس از بررسی مدیر تعیین می‌شود.</p></div>
           </>}
-          {(screen === 'login' || screen === 'signup') && <div><label className="block text-slate-400 mb-1">شماره موبایل</label><div className="relative"><input required dir="ltr" autoComplete="tel" placeholder="+98912… یا 0912…" value={phone} onChange={e => setPhone(e.target.value)} className={fieldClass + ' pl-3 pr-9 font-mono'} /><Phone className="w-4 h-4 text-slate-500 absolute right-3 top-3" /></div></div>}
+          {(screen === 'login' || screen === 'signup') && <div><label className="block text-slate-400 mb-1">ایمیل حساب کاربری</label><div className="relative"><input required type="email" dir="ltr" autoComplete="email" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} className={fieldClass + ' pl-3 pr-9'} /><Mail className="w-4 h-4 text-slate-500 absolute right-3 top-3" /></div></div>}
           {screen === 'forgot' && <div><label className="block text-slate-400 mb-1">ایمیل حساب کاربری</label><div className="relative"><input required type="email" dir="ltr" autoComplete="email" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} className={fieldClass + ' pl-3 pr-9'} /><Mail className="w-4 h-4 text-slate-500 absolute right-3 top-3" /></div><p className="text-slate-500 mt-1">بازیابی از طریق ایمیل ثبت‌شده در حساب Supabase انجام می‌شود.</p></div>}
           {(screen === 'login' || screen === 'signup') && <div><label className="block text-slate-400 mb-1">رمز عبور {screen === 'signup' && '(حداقل ۸ کاراکتر)'}</label><input required minLength={screen === 'signup' ? 8 : undefined} type="password" autoComplete={screen === 'login' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} className={fieldClass} /></div>}
           {screen === 'reset' && <div><label className="block text-slate-400 mb-1">رمز عبور جدید (حداقل ۸ کاراکتر)</label><input required minLength={8} type="password" autoComplete="new-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className={fieldClass} /></div>}
