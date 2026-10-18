@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { User, UserRole, AppState } from '../types';
+import { supabase } from '../lib/supabase';
 import { ROLES, roleLabel, digits, uid } from '../utils/formatters';
 import { StatusBadge } from '../components/StatusBadge';
 import {
@@ -121,8 +122,12 @@ export const UsersView: React.FC<UsersViewProps> = ({
     u => u.status !== 'pending' && (u.isSamplePhone || u.phone.startsWith('0900000') || u.isConvertedUser === false)
   ).length;
 
-  const handleApprove = (user: User) => {
-    const updatedUsers = state.users.map(u => (u.id === user.id ? { ...u, status: 'approved' as const, password: u.password || 'Password123' } : u));
+  const handleApprove = async (user: User) => {
+    if (supabase && user.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
+      const { error } = await supabase.from('profiles').update({ status: 'approved', role: user.role, updated_at: new Date().toISOString() }).eq('id', user.id);
+      if (error) { onShowToast(`تأیید در پایگاه داده انجام نشد: ${error.message}`); return; }
+    }
+    const updatedUsers = state.users.map(u => (u.id === user.id ? { ...u, status: 'approved' as const } : u));
     const newAudit = [
       {
         id: uid('log'),
@@ -137,7 +142,11 @@ export const UsersView: React.FC<UsersViewProps> = ({
     onShowToast(`درخواست عضویت ${user.firstName} ${user.lastName} با موفقیت تأیید شد.`);
   };
 
-  const handleReject = (user: User) => {
+  const handleReject = async (user: User) => {
+    if (supabase && user.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
+      const { error } = await supabase.from('profiles').update({ status: 'rejected', updated_at: new Date().toISOString() }).eq('id', user.id);
+      if (error) { onShowToast(`رد درخواست در پایگاه داده انجام نشد: ${error.message}`); return; }
+    }
     const updatedUsers = state.users.map(u => (u.id === user.id ? { ...u, status: 'rejected' as const } : u));
     const newAudit = [
       {
