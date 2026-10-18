@@ -71,14 +71,16 @@ export async function loadCloudProfile(userId: string): Promise<CloudProfile> {
   if (!data || data.status !== 'approved') {
     throw new Error('حساب شما هنوز توسط مدیر تأیید نشده است.');
   }
-  if (data.role !== 'admin') {
-    throw new Error('در این نسخه آزمایشی، ورود عملیاتی فعلاً برای مدیر سامانه فعال است.');
-  }
   return data as CloudProfile;
 }
 
 export async function loadCloudState(profile: CloudProfile): Promise<AppState> {
   if (!supabase) throw new Error('تنظیمات اتصال پایگاه داده کامل نیست.');
+  if (profile.role !== 'admin') {
+    const state = emptyPilotState();
+    state.users = [mapProfileToUser(profile)];
+    return state;
+  }
   const { data, error } = await supabase.from('app_state').select('state_json').eq('id', 'global').maybeSingle();
   if (error) throw error;
   let state: AppState;
