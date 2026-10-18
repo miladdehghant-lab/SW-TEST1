@@ -88,7 +88,19 @@ export async function loadCloudState(profile: CloudProfile): Promise<AppState> {
     state = emptyPilotState();
   }
   const adminUser = mapProfileToUser(profile);
-  state.users = [adminUser, ...(state.users || []).filter(user => user.id !== adminUser.id && user.role !== 'admin')];
+  // Admin user management must reflect real Supabase profiles, including pending signups.
+  const { data: profiles, error: profilesError } = await supabase
+    .from('profiles')
+    .select('id,display_name,phone,role,status,agency_id,supervisor_id')
+    .order('created_at', { ascending: false });
+  if (profilesError) throw profilesError;
+  const cloudUsers = ((profiles || []) as CloudProfile[]).map(mapProfileToUser);
+  const cloudIds = new Set(cloudUsers.map(user => user.id));
+  state.users = [
+    ...cloudUsers,
+    ...(state.users || []).filter(user => !cloudIds.has(user.id) && user.role !== 'admin'),
+  ];
+  if (!cloudIds.has(adminUser.id)) state.users.unshift(adminUser);
   if (!state.version || state.version < 5) state.version = 5;
   if (!data) {
     const { error: insertError } = await supabase.from('app_state').insert({
