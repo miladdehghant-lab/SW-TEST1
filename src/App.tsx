@@ -37,7 +37,7 @@ export default function App() {
     const cloudState = await loadCloudState(profile);
     setCurrentProfile(mapProfileToUser(profile));
     setState(cloudState);
-    setSession({ admin: true, id: userId });
+    setSession({ admin: profile.role === 'admin', id: userId });
     setCloudReady(true);
     setShowLoginModal(false);
   };
