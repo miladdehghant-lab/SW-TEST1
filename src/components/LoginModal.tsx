@@ -44,10 +44,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
     try {
       const rawIdentifier = identifier.trim();
       const isEmail = rawIdentifier.includes('@');
-      const normalizedPhone = rawIdentifier.replace(/[\s()-]/g, '').replace(/^0098/, '+98').replace(/^0(?=9\d{9}$)/, '+98');
-      const { data, error } = await supabase.auth.signInWithPassword(
-        isEmail ? { email: rawIdentifier, password } : { phone: normalizedPhone, password }
-      );
+      const cleanPhone = rawIdentifier.replace(/[\\s()-]/g, '');
+      if (!isEmail && !/^09\\d{9}$/.test(cleanPhone)) {
+        throw new Error('شماره موبایل باید ۱۱ رقم و با 09 شروع شود.');
+      }
+      // Phone-only users authenticate through an internal email alias. This avoids SMS setup.
+      const authEmail = isEmail ? rawIdentifier : `+989${cleanPhone.slice(2)}@phone.storewar.invalid`;
+      const { data, error } = await supabase.auth.signInWithPassword({ email: authEmail, password });
       if (error || !data.user) throw error || new Error('ورود انجام نشد.');
       const { data: profile, error: profileError } = await supabase.from('profiles').select('id,role,status').eq('id', data.user.id).single();
       if (profileError) throw profileError;
@@ -105,11 +108,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
     if (password.length < 8) return onShowToast('رمز عبور باید حداقل ۸ کاراکتر داشته باشد.');
     setBusy(true);
     try {
-      const cleanPhone = identifier.trim().replace(/[\s()-]/g, '');
-      if (!/^09\d{9}$/.test(cleanPhone)) throw new Error('شماره موبایل باید ۱۱ رقم و با 09 شروع شود.');
-      const authPhone = `+98${cleanPhone.slice(1)}`;
+      const cleanPhone = identifier.trim().replace(/[\\s()-]/g, '');
+      if (!/^09\\d{9}$/.test(cleanPhone)) throw new Error('شماره موبایل باید ۱۱ رقم و با 09 شروع شود.');
+      // The internal alias lets users register with phone + password without Phone Provider/SMS.
+      const authEmail = `+989${cleanPhone.slice(2)}@phone.storewar.invalid`;
       const { data, error } = await supabase.auth.signUp({
-        phone: authPhone,
+        email: authEmail,
         password,
         options: { data: { display_name: name.trim(), requested_role: role, phone: cleanPhone } }
       });
@@ -160,7 +164,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
           {screen !== 'login' && screen !== 'reset' && <button type="button" onClick={() => { setFeedback(null); setScreen('login'); }} className="text-slate-300 hover:text-white"><ArrowLeft className="inline w-4 h-4 ml-1" />بازگشت به ورود</button>}
           {screen === 'reset' && <p className="text-slate-400 text-center leading-5">اگر این صفحه پس از کلیک روی لینک ایمیل باز شده، رمز جدید را وارد کنید.</p>}
         </div>
-        {screen === 'login' && <p className="text-[11px] text-slate-500 leading-5 mt-5 text-center">حساب باید در Supabase ساخته شده باشد و پس از تأیید مدیر امکان ورود خواهد داشت. ورود روزمره با شماره موبایل و رمز عبور است.</p>}
+        {screen === 'login' && <p className="text-[11px] text-slate-500 leading-5 mt-5 text-center">ورود روزمره با شماره موبایل و رمز عبور انجام می‌شود؛ حساب‌های جدید تا تأیید مدیر در انتظار می‌مانند. مدیر فعلی همچنان می‌تواند با ایمیل وارد شود.</p>}
       </div>
     </div>
   );
