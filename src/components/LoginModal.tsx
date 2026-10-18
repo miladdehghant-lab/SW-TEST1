@@ -125,7 +125,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
       }
       setPassword('');
     } catch (err) {
-      onShowToast(err instanceof Error ? err.message : 'ثبت‌نام انجام نشد؛ تنظیمات تأیید ایمیل و پایگاه داده را بررسی کنید.');
+      const message = err instanceof Error ? err.message : 'ثبت‌نام انجام نشد؛ اتصال و تنظیمات Supabase را بررسی کنید.';
+      setFeedback({ kind: 'error', message });
+      onShowToast(message);
     } finally { setBusy(false); }
   };
 
