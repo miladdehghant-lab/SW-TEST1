@@ -55,11 +55,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
         await supabase.auth.signOut();
         throw new Error('درخواست حساب شما هنوز توسط مدیر تأیید نشده است.');
       }
-      if (profile.role !== 'admin') {
-        await supabase.auth.signOut();
-        throw new Error('در این نسخه آزمایشی، ورود عملیاتی فعلاً برای مدیر سامانه فعال است.');
-      }
-      onLoginSuccess({ admin: true, id: data.user.id });
+      onLoginSuccess({ admin: profile.role === 'admin', id: data.user.id });
       setFeedback({ kind: 'success', message: 'ورود موفق بود؛ در حال باز کردن داشبورد…' });
       onShowToast('با موفقیت وارد STORE WAR شدید.');
     } catch (err) {
