@@ -137,9 +137,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase) return onShowToast('اتصال Supabase تنظیم نشده است.');
-    const cleanPhone = identifier.trim().replace(/[\\s()-]/g, '');
-    if (!/^09\\d{9}$/.test(cleanPhone)) return onShowToast('شماره موبایل باید ۱۱ رقم و با 09 شروع شود.');
-    if (!/^\\d{6}$/.test(otp.trim())) return onShowToast('کد تأیید باید ۶ رقم باشد.');
+    const cleanPhone = identifier.trim().replace(/[\s()-]/g, '');
+    if (!/^09\d{9}$/.test(cleanPhone)) return onShowToast('شماره موبایل باید ۱۱ رقم و با 09 شروع شود.');
+    if (!/^\d{6}$/.test(otp.trim())) return onShowToast('کد تأیید باید ۶ رقم باشد.');
     setBusy(true);
     setFeedback(null);
     try {
@@ -185,7 +185,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
             <div><label className="block text-slate-400 mb-1">نقش درخواستی</label><select value={role} onChange={e => setRole(e.target.value as typeof role)} className={fieldClass}><option value="seller">فروشنده</option><option value="supervisor">سرپرست فروش</option><option value="support">کارشناس پشتیبانی فروش</option><option value="rep">نماینده</option></select><p className="text-slate-500 mt-1">نقش و دسترسی نهایی پس از بررسی مدیر تعیین می‌شود.</p></div>
           </>}
           {(screen === 'login' || screen === 'signup') && <div><label className="block text-slate-400 mb-1">{screen === 'login' ? 'شماره موبایل (مدیر فعلی می‌تواند ایمیلش را وارد کند)' : 'شماره موبایل'}</label><div className="relative"><input required dir="ltr" autoComplete="username" placeholder={screen === 'login' ? '0912... یا admin@example.com' : '0912...'} value={identifier} onChange={e => setIdentifier(e.target.value)} className={fieldClass + ' pl-3 pr-9'} /><Smartphone className="w-4 h-4 text-slate-500 absolute right-3 top-3" /></div></div>}
-          {screen === 'verify' && <div><label className="block text-slate-400 mb-1">کد ۶ رقمی پیامک‌شده</label><input required dir="ltr" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp} onChange={e => setOtp(e.target.value.replace(/\\D/g, '').slice(0, 6))} className={fieldClass} placeholder="123456" /><p className="text-slate-500 mt-1">شماره: {identifier}</p></div>}
+          {screen === 'verify' && <div><label className="block text-slate-400 mb-1">کد ۶ رقمی پیامک‌شده</label><input required dir="ltr" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} className={fieldClass} placeholder="123456" /><p className="text-slate-500 mt-1">شماره: {identifier}</p></div>}
           {screen === 'forgot' && <p className="text-slate-300 leading-6">بازیابی رمز از طریق مسئول مستقیم یا مدیر سامانه انجام می‌شود. برای احراز هویت با مسئول سازمانی خود تماس بگیرید.</p>}
           {(screen === 'login' || screen === 'signup') && <div><label className="block text-slate-400 mb-1">رمز عبور {screen === 'signup' && '(حداقل ۸ کاراکتر)'}</label><input required minLength={screen === 'signup' ? 8 : undefined} type="password" autoComplete={screen === 'login' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} className={fieldClass} /></div>}
           {screen === 'reset' && <div><label className="block text-slate-400 mb-1">رمز عبور جدید (حداقل ۸ کاراکتر)</label><input required minLength={8} type="password" autoComplete="new-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className={fieldClass} /></div>}
