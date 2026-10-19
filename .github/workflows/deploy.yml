@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - release/real-db-pilot
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
