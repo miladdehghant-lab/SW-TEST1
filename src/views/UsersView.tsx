@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { User, UserRole, AppState } from '../types';
+import { supabase } from '../lib/supabase';
+import { mapProfileToUser } from '../services/pilotRepository';
 import { ROLES, roleLabel, digits, uid } from '../utils/formatters';
 import { StatusBadge } from '../components/StatusBadge';
 import {
@@ -38,6 +40,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
   onShowToast,
 }) => {
   const [search, setSearch] = useState('');
+  const [refreshingProfiles, setRefreshingProfiles] = useState(false);
   const [roleFilter, setRoleFilter] = useState<'all' | 'seller' | 'supervisor' | 'staff' | 'pending' | 'needs_conversion'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -80,6 +83,27 @@ export const UsersView: React.FC<UsersViewProps> = ({
   const [newPassword, setNewPassword] = useState('Password123');
   const [showNewPass, setShowNewPass] = useState(false);
 
+  const handleRefreshProfiles = async () => {
+    if (!supabase || !isAdmin) return;
+    setRefreshingProfiles(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id,display_name,phone,role,status,agency_id,supervisor_id')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      const cloudUsers = (data || []).map(profile => mapProfileToUser(profile as any));
+      const cloudIds = new Set(cloudUsers.map(user => user.id));
+      const mergedUsers = [...cloudUsers, ...state.users.filter(user => !cloudIds.has(user.id) && user.role !== 'admin')];
+      onUpdateState({ ...state, users: mergedUsers });
+      onShowToast(`فهرست کاربران از پایگاه داده به‌روزرسانی شد؛ ${cloudUsers.filter(user => user.status === 'pending').length} درخواست در انتظار بررسی است.`);
+    } catch (err) {
+      onShowToast(err instanceof Error ? `دریافت کاربران ناموفق بود: ${err.message}` : 'دریافت کاربران ناموفق بود.');
+    } finally {
+      setRefreshingProfiles(false);
+    }
+  };
+
   const canSeeUser = (u: User) => {
     if (isAdmin) return true;
     if (currentUser?.role === 'rep') return u.agency === currentUser.agency;
@@ -121,8 +145,12 @@ export const UsersView: React.FC<UsersViewProps> = ({
     u => u.status !== 'pending' && (u.isSamplePhone || u.phone.startsWith('0900000') || u.isConvertedUser === false)
   ).length;
 
-  const handleApprove = (user: User) => {
-    const updatedUsers = state.users.map(u => (u.id === user.id ? { ...u, status: 'approved' as const, password: u.password || 'Password123' } : u));
+  const handleApprove = async (user: User) => {
+    if (supabase && user.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
+      const { error } = await supabase.from('profiles').update({ status: 'approved', role: user.role, updated_at: new Date().toISOString() }).eq('id', user.id);
+      if (error) { onShowToast(`تأیید در پایگاه داده انجام نشد: ${error.message}`); return; }
+    }
+    const updatedUsers = state.users.map(u => (u.id === user.id ? { ...u, status: 'approved' as const } : u));
     const newAudit = [
       {
         id: uid('log'),
@@ -137,7 +165,11 @@ export const UsersView: React.FC<UsersViewProps> = ({
     onShowToast(`درخواست عضویت ${user.firstName} ${user.lastName} با موفقیت تأیید شد.`);
   };
 
-  const handleReject = (user: User) => {
+  const handleReject = async (user: User) => {
+    if (supabase && user.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
+      const { error } = await supabase.from('profiles').update({ status: 'rejected', updated_at: new Date().toISOString() }).eq('id', user.id);
+      if (error) { onShowToast(`رد درخواست در پایگاه داده انجام نشد: ${error.message}`); return; }
+    }
     const updatedUsers = state.users.map(u => (u.id === user.id ? { ...u, status: 'rejected' as const } : u));
     const newAudit = [
       {
@@ -414,6 +446,14 @@ export const UsersView: React.FC<UsersViewProps> = ({
 
           {isAdmin && (
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => void handleRefreshProfiles()}
+                disabled={refreshingProfiles}
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#1c2e47] hover:bg-[#263d5b] disabled:opacity-50 text-slate-200 text-xs font-semibold transition-colors"
+              >
+                <Users className="w-4 h-4" />
+                <span>{refreshingProfiles ? 'در حال دریافت…' : 'به‌روزرسانی درخواست‌ها'}</span>
+              </button>
               <button
                 onClick={() => setShowAddModal(true)}
                 className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors shadow-lg shadow-blue-600/20"

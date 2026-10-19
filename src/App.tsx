@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppState, AuthSession, User } from './types';
-import { loadState, saveState, loadSession, saveSession, resetToDefaults } from './utils/storage';
+import { supabase, supabaseConfigured } from './lib/supabase';
+import { emptyPilotState, loadCloudProfile, loadCloudState, mapProfileToUser, persistCloudState } from './services/pilotRepository';
 import { Navbar } from './components/Navbar';
 import { Sidebar, NavTab } from './components/Sidebar';
 import { ArchitectureReviewModal } from './components/ArchitectureReviewModal';
@@ -19,27 +20,56 @@ import { ChallengesView } from './views/ChallengesView';
 import { RoadmapView } from './views/RoadmapView';
 
 export default function App() {
-  const [state, setState] = useState<AppState>(loadState);
-  const [session, setSession] = useState<AuthSession | null>(loadSession);
+  const [state, setState] = useState<AppState>(() => emptyPilotState());
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [currentProfile, setCurrentProfile] = useState<User | null>(null);
+  const [cloudReady, setCloudReady] = useState(false);
   const [currentTab, setCurrentTab] = useState<NavTab>('overview');
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [preselectedStoreForActivity, setPreselectedStoreForActivity] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Sync state to localStorage
-  useEffect(() => {
-    saveState(state);
-  }, [state]);
+  const bootstrapCloudSession = async (userId: string) => {
+    if (!supabase) throw new Error('تنظیمات Supabase کامل نیست.');
+    const profile = await loadCloudProfile(userId);
+    const cloudState = await loadCloudState(profile);
+    setCurrentProfile(mapProfileToUser(profile));
+    setState(cloudState);
+    setSession({ admin: profile.role === 'admin', id: userId });
+    setCloudReady(true);
+    setShowLoginModal(false);
+  };
 
-  // Sync session
+  // Restore the real Supabase session on every device; no local demo session is created.
   useEffect(() => {
-    saveSession(session);
-    if (!session) {
-      setShowLoginModal(true);
-    }
-  }, [session]);
+    let active = true;
+    const restore = async () => {
+      if (!supabaseConfigured || !supabase) return;
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session?.user) return;
+      try {
+        await bootstrapCloudSession(data.session.user.id);
+      } catch (err) {
+        await supabase.auth.signOut();
+        if (active) showToast(err instanceof Error ? err.message : 'بازیابی نشست ناموفق بود.');
+      }
+    };
+    void restore();
+    return () => { active = false; };
+  // Run once at startup; login uses the same bootstrap function below.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist shared state only after it has been loaded from the real database.
+  useEffect(() => {
+    if (!cloudReady || !session?.admin) return;
+    void persistCloudState(state, session.id).catch(err => {
+      showToast(err instanceof Error ? `ذخیره در پایگاه داده ناموفق بود: ${err.message}` : 'ذخیره در پایگاه داده ناموفق بود.');
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, cloudReady, session?.id]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -52,27 +82,24 @@ export default function App() {
     setState(newState);
   };
 
-  const handleSwitchUser = (userId: string, isAdmin = false) => {
-    const newSession: AuthSession = { admin: isAdmin, id: userId };
-    setSession(newSession);
-    const user = state.users.find(u => u.id === userId);
-    showToast(
-      isAdmin
-        ? 'نقش به مدیر ارشد سیستم تغییر یافت.'
-        : `نقش به ${user?.firstName} ${user?.lastName} (${user?.role}) تغییر یافت.`
-    );
+  const handleSwitchUser = (_userId: string, _isAdmin = false) => {
+    showToast('تغییر نقش آزمایشی غیرفعال است؛ هر نقش باید با حساب واقعی خودش وارد شود.');
   };
 
   const handleLogout = () => {
+    void (async () => { if (supabase) await supabase.auth.signOut(); })();
     setSession(null);
+    setCurrentProfile(null);
+    setCloudReady(false);
     setShowLoginModal(true);
   };
 
   const handleResetData = () => {
-    if (window.confirm('آیا مایلید تمام داده‌ها پاکسازی شده و سیستم به حالت کاملاً خام و آماده انتشار بازنشانی شود؟')) {
-      const fresh = resetToDefaults();
+    if (window.confirm('تمام داده‌های آزمایشی مشترک در پایگاه داده پاک شود؟ این عملیات قابل بازگشت نیست.')) {
+      const fresh = emptyPilotState();
+      if (currentProfile) fresh.users = [currentProfile];
       setState(fresh);
-      showToast('سیستم با موفقیت به حالت خام اولیه بازنشانی شد.');
+      showToast('داده‌های نسخه آزمایشی پاک‌سازی شدند.');
     }
   };
 
@@ -81,23 +108,9 @@ export default function App() {
     setCurrentTab('activities');
   };
 
-  // Resolve current active user object
-  const currentUser: User | null = session?.admin
-    ? (state.users.find(u => u.role === 'admin' || u.id === 'usr_admin') || {
-        id: 'usr_admin',
-        phone: '09123153133',
-        firstName: 'میلاد',
-        lastName: 'دهقانی',
-        city: 'تهران',
-        agency: 'دفتر مرکزی',
-        role: 'admin',
-        status: 'approved',
-        password: 'Milad@3133',
-        createdAt: '2026-09-01T08:00:00.000Z',
-      })
-    : state.users.find(u => u.id === session?.id) || null;
-
-  const isAdmin = Boolean(session?.admin || currentUser?.role === 'admin');
+  // The active identity comes only from Supabase Auth + the approved database profile.
+  const currentUser: User | null = currentProfile;
+  const isAdmin = Boolean(session?.admin && currentUser?.role === 'admin');
 
   // Count pending items for badges
   const pendingUsersCount = state.users.filter(u => u.status === 'pending').length;
@@ -284,8 +297,14 @@ export default function App() {
         isOpen={showLoginModal}
         state={state}
         onLoginSuccess={sess => {
-          setSession(sess);
-          setShowLoginModal(false);
+          void bootstrapCloudSession(sess.id).catch(async err => {
+            if (supabase) await supabase.auth.signOut();
+            setSession(null);
+            setCurrentProfile(null);
+            setCloudReady(false);
+            setShowLoginModal(true);
+            showToast(err instanceof Error ? err.message : 'اتصال به داده‌های مشترک ناموفق بود.');
+          });
         }}
         onUpdateState={handleUpdateState}
         onShowToast={showToast}
