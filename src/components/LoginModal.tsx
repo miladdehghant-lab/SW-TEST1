@@ -122,6 +122,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
         setOtp('');
         setFeedback({ kind: 'success', message: 'کد تأیید به شماره موبایل ارسال شد. کد پیامک را وارد کنید تا ثبت‌نام تکمیل شود.' });
       } else if (data.user && data.session) {
+        await supabase.auth.signOut();
         setScreen('login');
         setFeedback({ kind: 'success', message: 'درخواست ثبت‌نام ایجاد شد. پس از بررسی هویت و تأیید مدیر سازمان، امکان ورود خواهید داشت.' });
         onShowToast('درخواست ثبت‌نام ثبت شد؛ منتظر تأیید مدیر بمانید.');
