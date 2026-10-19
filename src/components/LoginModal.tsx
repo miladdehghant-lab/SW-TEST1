@@ -49,7 +49,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
         throw new Error('شماره موبایل باید ۱۱ رقم و با 09 شروع شود.');
       }
       // Phone-only users authenticate through an internal email alias. This avoids SMS setup.
-      const authEmail = isEmail ? rawIdentifier : `+989${cleanPhone.slice(2)}@phone.storewar.app`;
+      const authEmail = isEmail ? rawIdentifier : `phone+98${cleanPhone.slice(1)}@storewar.app`;
       const { data, error } = await supabase.auth.signInWithPassword({ email: authEmail, password });
       if (error || !data.user) throw error || new Error('ورود انجام نشد.');
       const { data: profile, error: profileError } = await supabase.from('profiles').select('id,role,status').eq('id', data.user.id).single();
@@ -111,7 +111,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
       const cleanPhone = identifier.trim().replace(/[\s()-]/g, '');
       if (!/^09\d{9}$/.test(cleanPhone)) throw new Error('شماره موبایل باید ۱۱ رقم و با 09 شروع شود.');
       // The internal alias lets users register with phone + password without Phone Provider/SMS.
-      const authEmail = `+989${cleanPhone.slice(2)}@phone.storewar.app`;
+      const authEmail = `phone+98${cleanPhone.slice(1)}@storewar.app`;
       const { data, error } = await supabase.auth.signUp({
         email: authEmail,
         password,
