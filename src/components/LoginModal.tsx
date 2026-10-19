@@ -11,7 +11,7 @@ interface LoginModalProps {
   onShowToast: (msg: string) => void;
 }
 
-type Screen = 'login' | 'signup' | 'forgot' | 'reset';
+type Screen = 'login' | 'signup' | 'verify' | 'forgot' | 'reset';
 
 
 const fieldClass = 'w-full px-3 py-2.5 rounded-xl bg-[#0c1727] border border-[#283a53] text-white outline-none focus:border-blue-500';
@@ -23,6 +23,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
   const [role, setRole] = useState<'seller' | 'supervisor' | 'support' | 'rep'>('seller');
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [otp, setOtp] = useState('');
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
 
@@ -48,9 +49,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
       if (!isEmail && !/^09\d{9}$/.test(cleanPhone)) {
         throw new Error('شماره موبایل باید ۱۱ رقم و با 09 شروع شود.');
       }
-      // Phone-only users authenticate through an internal email alias. This avoids SMS setup.
-      const authEmail = isEmail ? rawIdentifier : `phone+98${cleanPhone.slice(1)}@storewar.app`;
-      const { data, error } = await supabase.auth.signInWithPassword({ email: authEmail, password });
+      const { data, error } = isEmail
+        ? await supabase.auth.signInWithPassword({ email: rawIdentifier, password })
+        : await supabase.auth.signInWithPassword({ phone: `+98${cleanPhone.slice(1)}`, password });
       if (error || !data.user) throw error || new Error('ورود انجام نشد.');
       const { data: profile, error: profileError } = await supabase.from('profiles').select('id,role,status').eq('id', data.user.id).single();
       if (profileError) throw profileError;
@@ -110,15 +111,17 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
     try {
       const cleanPhone = identifier.trim().replace(/[\s()-]/g, '');
       if (!/^09\d{9}$/.test(cleanPhone)) throw new Error('شماره موبایل باید ۱۱ رقم و با 09 شروع شود.');
-      // The internal alias lets users register with phone + password without Phone Provider/SMS.
-      const authEmail = `phone+98${cleanPhone.slice(1)}@storewar.app`;
       const { data, error } = await supabase.auth.signUp({
-        email: authEmail,
+        phone: `+98${cleanPhone.slice(1)}`,
         password,
         options: { data: { display_name: name.trim(), requested_role: role, phone: cleanPhone } }
       });
       if (error) throw error;
-      if (data.user) {
+      if (data.user && !data.session) {
+        setScreen('verify');
+        setOtp('');
+        setFeedback({ kind: 'success', message: 'کد تأیید به شماره موبایل ارسال شد. کد پیامک را وارد کنید تا ثبت‌نام تکمیل شود.' });
+      } else if (data.user && data.session) {
         setScreen('login');
         setFeedback({ kind: 'success', message: 'درخواست ثبت‌نام ایجاد شد. پس از بررسی هویت و تأیید مدیر سازمان، امکان ورود خواهید داشت.' });
         onShowToast('درخواست ثبت‌نام ثبت شد؛ منتظر تأیید مدیر بمانید.');
@@ -131,13 +134,39 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
     } finally { setBusy(false); }
   };
 
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) return onShowToast('اتصال Supabase تنظیم نشده است.');
+    const cleanPhone = identifier.trim().replace(/[\\s()-]/g, '');
+    if (!/^09\\d{9}$/.test(cleanPhone)) return onShowToast('شماره موبایل باید ۱۱ رقم و با 09 شروع شود.');
+    if (!/^\\d{6}$/.test(otp.trim())) return onShowToast('کد تأیید باید ۶ رقم باشد.');
+    setBusy(true);
+    setFeedback(null);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({ phone: `+98${cleanPhone.slice(1)}`, token: otp.trim(), type: 'sms' });
+      if (error) throw error;
+      if (!data.user) throw new Error('تأیید شماره انجام نشد.');
+      await supabase.auth.signOut();
+      setPassword('');
+      setOtp('');
+      setScreen('login');
+      setFeedback({ kind: 'success', message: 'شماره موبایل تأیید شد. درخواست شما برای بررسی و تأیید مدیر ارسال شده است.' });
+      onShowToast('ثبت‌نام تأیید شد؛ پس از تأیید مدیر می‌توانید وارد شوید.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'تأیید شماره موبایل انجام نشد.';
+      setFeedback({ kind: 'error', message });
+      onShowToast(message);
+    } finally { setBusy(false); }
+  };
+
   const titles: Record<Screen, string> = {
     login: 'ورود امن',
     signup: 'ثبت‌نام در STORE WAR',
+    verify: 'تأیید شماره موبایل',
     forgot: 'بازیابی رمز عبور',
     reset: 'تعیین رمز عبور جدید'
   };
-  const submit = screen === 'login' ? handleLogin : screen === 'signup' ? handleSignup : screen === 'forgot' ? handleForgot : handleReset;
+  const submit = screen === 'login' ? handleLogin : screen === 'signup' ? handleSignup : screen === 'verify' ? handleVerify : screen === 'forgot' ? handleForgot : handleReset;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md overflow-y-auto">
@@ -156,6 +185,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
             <div><label className="block text-slate-400 mb-1">نقش درخواستی</label><select value={role} onChange={e => setRole(e.target.value as typeof role)} className={fieldClass}><option value="seller">فروشنده</option><option value="supervisor">سرپرست فروش</option><option value="support">کارشناس پشتیبانی فروش</option><option value="rep">نماینده</option></select><p className="text-slate-500 mt-1">نقش و دسترسی نهایی پس از بررسی مدیر تعیین می‌شود.</p></div>
           </>}
           {(screen === 'login' || screen === 'signup') && <div><label className="block text-slate-400 mb-1">{screen === 'login' ? 'شماره موبایل (مدیر فعلی می‌تواند ایمیلش را وارد کند)' : 'شماره موبایل'}</label><div className="relative"><input required dir="ltr" autoComplete="username" placeholder={screen === 'login' ? '0912... یا admin@example.com' : '0912...'} value={identifier} onChange={e => setIdentifier(e.target.value)} className={fieldClass + ' pl-3 pr-9'} /><Smartphone className="w-4 h-4 text-slate-500 absolute right-3 top-3" /></div></div>}
+          {screen === 'verify' && <div><label className="block text-slate-400 mb-1">کد ۶ رقمی پیامک‌شده</label><input required dir="ltr" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp} onChange={e => setOtp(e.target.value.replace(/\\D/g, '').slice(0, 6))} className={fieldClass} placeholder="123456" /><p className="text-slate-500 mt-1">شماره: {identifier}</p></div>}
           {screen === 'forgot' && <p className="text-slate-300 leading-6">بازیابی رمز از طریق مسئول مستقیم یا مدیر سامانه انجام می‌شود. برای احراز هویت با مسئول سازمانی خود تماس بگیرید.</p>}
           {(screen === 'login' || screen === 'signup') && <div><label className="block text-slate-400 mb-1">رمز عبور {screen === 'signup' && '(حداقل ۸ کاراکتر)'}</label><input required minLength={screen === 'signup' ? 8 : undefined} type="password" autoComplete={screen === 'login' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} className={fieldClass} /></div>}
           {screen === 'reset' && <div><label className="block text-slate-400 mb-1">رمز عبور جدید (حداقل ۸ کاراکتر)</label><input required minLength={8} type="password" autoComplete="new-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className={fieldClass} /></div>}
@@ -163,7 +193,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLoginSuccess, 
         </form>
         <div className="flex flex-col items-center gap-3 mt-5 text-xs">
           {screen === 'login' && <><button type="button" onClick={() => { setFeedback(null); setScreen('forgot'); }} className="text-blue-300 hover:text-white">فراموشی رمز عبور</button><button type="button" onClick={() => { setFeedback(null); setScreen('signup'); }} className="text-cyan-300 hover:text-white"><UserPlus className="inline w-4 h-4 ml-1" />ثبت‌نام کاربر جدید</button></>}
-          {screen !== 'login' && screen !== 'reset' && <button type="button" onClick={() => { setFeedback(null); setScreen('login'); }} className="text-slate-300 hover:text-white"><ArrowLeft className="inline w-4 h-4 ml-1" />بازگشت به ورود</button>}
+          {screen !== 'login' && screen !== 'reset' && screen !== 'verify' && <button type="button" onClick={() => { setFeedback(null); setScreen('login'); }} className="text-slate-300 hover:text-white"><ArrowLeft className="inline w-4 h-4 ml-1" />بازگشت به ورود</button>}
+          {screen === 'verify' && <button type="button" onClick={() => { setFeedback(null); setScreen('signup'); }} className="text-slate-300 hover:text-white"><ArrowLeft className="inline w-4 h-4 ml-1" />بازگشت به ثبت‌نام</button>}
           {screen === 'reset' && <p className="text-slate-400 text-center leading-5">اگر این صفحه پس از کلیک روی لینک ایمیل باز شده، رمز جدید را وارد کنید.</p>}
         </div>
         {screen === 'login' && <p className="text-[11px] text-slate-500 leading-5 mt-5 text-center">ورود روزمره با شماره موبایل و رمز عبور انجام می‌شود؛ حساب‌های جدید تا تأیید مدیر در انتظار می‌مانند. مدیر فعلی همچنان می‌تواند با ایمیل وارد شود.</p>}
